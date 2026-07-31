@@ -126,23 +126,57 @@ This file only tracks what's done, what's next, and facts later phases need.
   actual memory maps), reconsider whether hand-transcription is still
   honest enough or whether it needs an "illustrative only" disclaimer too.
 
+- Phase 5 — 02-retro-amiga: Guides + diagram. Added
+  `02-retro-amiga/README.md` (module index + Mermaid Hunk-block-sequence
+  diagram) and five guides: 68000 recap (registers incl. A7 banking,
+  big-endian, addressing modes as Ghidra prints them, MOVEM/LINK-UNLK/TRAP
+  patterns), Amiga Hunk executable format (block types/layout, and that
+  **Ghidra ships no native Hunk loader** — verified against the source tree,
+  community extension `BartmanAbyss/ghidra-amiga` noted as the practical
+  option), exec.library/Kickstart basics (SysBase at address `4`, LVO
+  jump-table mechanics, why `jsr -552(a6)` shows up unnamed in Ghidra),
+  custom chip registers (Agnus/Denise/Paula register table from AHRM
+  Appendix B, read/write-address asymmetry), and typical copy-protection
+  patterns (non-standard track formats, CIA-timer timing checks, keydisk
+  schemes, anti-disassembly obfuscation, trap-door bootstrap loaders — RE
+  recognition framing, sourced from Amiga preservation material, not a
+  cracking how-to). All facts verified by a research pass against primary
+  sources (Motorola/NXP M68000 PRM, Amiga Hardware Reference Manual, Amiga
+  ROM Kernel Reference Manual, the literal AmigaOS NDK `doshunks.h`, and
+  Ghidra 12.1.2 source directly — not secondary summaries); sourcing kept in
+  `02-retro-amiga/RESEARCH-NOTES.md`.
+
+## Carried-forward notes (continued)
+
+- **Ghidra has no native Amiga/Hunk loader** (confirmed against the
+  `Ghidra_12.1.2_build` source tree: no Hunk-related `Loader` class, no
+  `hunk`/`amiga` hits repo-wide, `68000.opinion` doesn't pair 68000 with a
+  Hunk loader). Phase 6 exercises for this module will need either the
+  community extension `BartmanAbyss/ghidra-amiga` (unverified internals —
+  worth reviewing before recommending it hands-on) or a manual
+  raw-binary-import workaround per hunk. Decide which before writing an
+  exercise that has learners actually import a Hunk binary.
+- `OpenLibrary`'s LVO (`-552`) is well-corroborated across secondary sources
+  but wasn't pinned to the literal NDK `.fd`/pragma file in Phase 5's
+  research pass — flagged in `02-retro-amiga/RESEARCH-NOTES.md` under
+  Unresolved, not blocking but worth a check if Phase 6 needs more LVO
+  constants than just this one example.
+
 ## Next
 
-- Phase 5 — 02-retro-amiga: Guides + diagram
-  - Content: 68000 recap (short refresher, not a full course — user already
-    knows at least one retro CPU per PLAN.md's context), Hunk executable
-    format, exec.library/Kickstart basics, recognizing custom-chip registers
-    (Agnus/Denise/Paula) in disassembly, typical copy-protection patterns.
-    Plus a Mermaid Hunk-/executable-layout diagram, per PLAN.md's
-    visual/interactive materials table (`02-retro-amiga` row).
+- Phase 6 — 02-retro-amiga: Exercises + Custom-Chip/Register-Explorer HTML
+  - Content per PLAN.md: `exercises/<slug>/{problem.md, solution.md}` for
+    the 5 Phase 5 topics, using self-assembled 68000 samples (vasm/vbcc or
+    vasm+vlink — NOT the plain-`cc` pattern from 00-quickstart/
+    01-core-workflows, see the platform-toolchain note above) or
+    public-domain/homebrew/demoscene material — no copyrighted ROMs/games.
+    Plus the interactive HTML: a custom-chip/register explorer (hover/click
+    an address range → chip + function), per PLAN.md's visual/interactive
+    materials table (`02-retro-amiga` row).
   - Model: Sonnet 5.
-  - Legal note applies from here on: no copyrighted ROMs/games. Use
-    self-assembled samples (vasm/vbcc or vasm+vlink for 68000, per PLAN.md's
-    legal note) or public-domain/homebrew/demoscene material or AROS as
-    reference — this is a hard switch from 00-quickstart/01-core-workflows'
-    plain-`cc` sample convention (see the note above on platform-specific
-    toolchains for modules 02–04).
-  - Open items carried from Phase 1 and Phase 3 (see notes above): several
-    facts are flagged "verify on an installed copy" rather than fully
-    source-confirmed — worth a sanity check once Ghidra is actually
-    installed and running, whenever convenient (not blocking).
+  - Before scripting an exercise that imports a real Hunk binary, resolve
+    the open item above (which loader path — `ghidra-amiga` extension vs.
+    manual raw-binary import per hunk).
+  - Open items carried from Phase 1 and Phase 3: several quickstart/
+    core-workflows facts are still flagged "verify on an installed copy" —
+    not blocking, worth a sanity check whenever Ghidra is actually running.
