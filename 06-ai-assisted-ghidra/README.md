@@ -16,8 +16,18 @@ module's guides are ordered to front-load that concern rather than bury it.
    — which of the ~15 Ghidra MCP servers that exist today this course
    recommends, why the star counts are misleading, and which one to avoid
    despite being the most popular search hit.
-2. Setup, workflows, and verification habits — **Phase 13**, not written
-   yet (depends on the pick above).
+2. [Setting up ReVa](02-setup.md) — building from source against this
+   course's Ghidra 12.1.2 (verified hands-on, including *why* that sidesteps
+   the release zip's version mismatch), GUI activation, headless mode, and
+   where its configuration actually lives.
+3. [AI-assisted RE workflows](03-ai-assisted-workflows.md) — adapting
+   ReVa's own shipped triage/analysis skills, written for modern binaries,
+   to this course's retro platforms and their unnamed-call problem.
+4. [Limits and verification duty](04-verification-and-limits.md) — why
+   "never accept Ghidra output from AI unreviewed" isn't optional caution,
+   read directly out of ReVa's own security-relevant source (the public-
+   binding warning, the `Scripting` tool group), plus the concrete
+   mitigation and review habit to actually apply.
 
 ## Architecture: where the trust boundaries actually sit
 
@@ -84,4 +94,5 @@ The four boundaries, and who's actually responsible for each one:
 See guide 1 for how each evaluated server handles (or fails to handle)
 boundaries ③ and ④, and `RESEARCH-NOTES.md` for the full sourcing —
 GitHub API metadata, source-level citations to specific files/lines, and
-what's still unverified pending a hands-on Phase 13.
+(Phase 13's addendum) the hands-on build/config verification guides 2-4
+are based on.

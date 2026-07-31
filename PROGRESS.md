@@ -428,31 +428,54 @@ This file only tracks what's done, what's next, and facts later phases need.
   v6.0.0 (a substantially-rewritten descendant, not a tracked fork).
   Corrected in both `05-automation-scripting/RESEARCH-NOTES.md` and here.
 
-## Next
+- Phase 13 — 06-ai-assisted-ghidra: Setup, workflows, verification pitfalls
+  + exercises, for **ReVa**. Added three guides — `02-setup.md` (build from
+  source, GUI activation, headless mode, where config lives),
+  `03-ai-assisted-workflows.md` (adapting ReVa's own shipped
+  binary-triage/deep-analysis skills — written for modern binaries — to
+  this course's retro platforms and their unnamed-call problem), and
+  `04-verification-and-limits.md` (why "never accept AI output unreviewed"
+  isn't optional, read out of ReVa's own security-relevant source rather
+  than asserted) — plus matching `exercises/<slug>/{problem.md,
+  solution.md}` for all three. **Resolved Phase 12's central Unresolved
+  item hands-on**: actually ran `GHIDRA_INSTALL_DIR=~/ghidra_12.1.2_PUBLIC
+  gradle install` against a real clone of
+  `cyberkaida/reverse-engineering-assistant` — build succeeded, installed
+  `extension.properties` reads `version=12.1.2` exactly (no mismatch
+  dialog), confirming the mechanical inference Phase 12 could only assert.
+  Found and documented a new gotcha along the way: the installed
+  extension's folder name (and the `dist/*.zip` filename) is derived from
+  the **local git clone directory's name**, not from anything in
+  `extension.properties` — no `settings.gradle` pins `rootProject.name`, so
+  Gradle falls back to the clone folder's basename; functionally harmless
+  (Ghidra resolves the extension by its internal `name=ReVa` field) but
+  worth knowing before cross-checking folder names against the README.
+  Read ReVa's `ToolGroup` mechanics directly from source (not just its
+  README/changelog prose, closing another Phase 12 Unresolved item): six
+  groups, `SCRIPTING` isolated to exactly one tool provider (arbitrary
+  Python execution) and cleanly separate from renames/retypes (which live
+  in `CORE_ANALYSIS`) — meaning disabling `Scripting` removes code
+  execution but *not* the need to review renames/retypes, a distinction
+  `exercises/04-verification-and-limits` exercises directly. Also read the
+  public-binding warning's exact wording straight from
+  `McpServerManager.buildPublicBindingWarning()`, used verbatim (lightly
+  excerpted) in guide 4 instead of paraphrased. `exercises/04` uses **real
+  captured decompiler output** (not hand-transcribed) — reconfirmed Phase
+  11's `pyghidraRun -H` vs. plain `analyzeHeadless` gotcha (an untagged
+  `.py` post-script needs the PyGhidra-initializing entry point) getting
+  there. Full sourcing appended as a "Phase 13 addendum" section in
+  `06-ai-assisted-ghidra/RESEARCH-NOTES.md`, including the one item still
+  not run hands-on (headless mode's separate `uv tool install
+  reverse-engineering-assistant` / `mcp-reva` path — `uv` availability
+  wasn't confirmed in this environment).
 
-- Phase 13 — 06-ai-assisted-ghidra: Setup, workflows, verification
-  pitfalls + exercises, for **ReVa** (Phase 12's pick).
-  - Content per PLAN.md: setup guide, sensible AI-assisted RE workflows,
-    limits/verification-duty when taking AI suggestions ("never accept
-    Ghidra output from AI unreviewed").
-  - **Must verify hands-on before writing the setup guide as fact**
-    (flagged Unresolved by Phase 12's research): building ReVa from source
-    against `~/ghidra_12.1.2_PUBLIC` should produce a matching
-    `version=12.1.2` and install without Ghidra's "Extension Version
-    Mismatch" dialog (the prebuilt release zip declares `version=12.1` and
-    does trigger that dialog) — actually run the Gradle build in this
-    environment and confirm, rather than asserting the mechanical
-    inference as fact.
-  - Exercises should include: disabling ReVa's `SCRIPTING` tool group
-    before pointing the agent at an untrusted binary (the concrete
-    mitigation for the prompt-injection gap Phase 12 documented as
-    unaddressed by every evaluated server), and a review-before-accepting
-    exercise (agent proposes a rename/retype, student verifies it against
-    the actual decompiled code before committing it) — matches PLAN.md's
-    "Verifikationspflicht" framing for this module directly.
-  - No dedicated diagram/interactive HTML planned for Phase 13 per
-    PLAN.md's visual-materials table (06's only diagram is Phase 12's
-    architecture diagram, already done).
+- Phase 14 — Cross-cutting polish (final phase per PLAN.md's table):
+  `BACKLOG-future-topics.md`, Anki-importable flashcard CSV (shortcuts,
+  register names, format field names), printable one-page cheatsheet per
+  platform, root `README.md` finalized as the course's front door. Consider
+  a lab-notebook-template too (PLAN.md's "additionally suggested" list) if
+  it doesn't blow the phase's scope — it's explicitly optional, unlike the
+  four items above which PLAN.md's phase table names directly.
 
 ## Carried-forward notes (continued)
 
@@ -602,3 +625,15 @@ This file only tracks what's done, what's next, and facts later phases need.
   which involves an actual RE tool + AI-tool-access trust boundary) should
   check for this install before assuming Ghidra is unavailable the way
   Phases 5-10 did — it changes what "verified" can mean going forward.
+
+- **Phase 13 left a real side effect on this machine's actual Ghidra
+  install**, not just in a scratch dir: `gradle install` for the ReVa
+  build-verification step installed the extension into
+  `~/ghidra_12.1.2_PUBLIC/Ghidra/Extensions/reva-build/` (folder named
+  `reva-build` because that's what the test clone directory was named — see
+  Phase 13's Completed entry). It's a real, working ReVa install, just
+  under a non-default folder name; harmless to leave as-is (Ghidra
+  identifies it by its internal `name=ReVa` property, not the folder), but
+  worth knowing it's there if a later session goes looking for why an
+  unexpected extension folder exists, or wants to rename/rebuild it
+  cleanly into a folder actually named `reverse-engineering-assistant`.

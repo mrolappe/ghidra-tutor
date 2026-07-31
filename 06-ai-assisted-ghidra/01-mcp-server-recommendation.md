@@ -116,12 +116,11 @@ Two things to know going in, not discover mid-setup:
   Ghidra does an exact string match on extension versions
   (`ExtensionInstaller.validateExtensionVersion`), so installing the
   prebuilt zip pops an "Extension Version Mismatch" dialog (default button
-  is *Cancel*; "Install Anyway" is the opt-in). Building from source
-  against your own `12.1.2` install should produce a matching version
-  string and install cleanly — this is a mechanical inference from how
-  Ghidra's extension-build templating works, not yet confirmed hands-on in
-  this environment (no display was available for this research pass).
-  Phase 13 needs to verify this before writing it up as a guaranteed step.
+  is *Cancel*; "Install Anyway" is the opt-in). **Confirmed hands-on in
+  Phase 13**: building from source against a real `12.1.2` install
+  (`GHIDRA_INSTALL_DIR=~/ghidra_12.1.2_PUBLIC gradle install`) produces an
+  installed `extension.properties` reading `version=12.1.2` exactly — see
+  `02-setup.md` for the full build walkthrough.
 - **The scripting tool group is on by default.** ReVa's own README says so
   plainly. For work against any binary you don't already trust, disable
   the `SCRIPTING` tool group — that's the arbitrary-Python-execution path,

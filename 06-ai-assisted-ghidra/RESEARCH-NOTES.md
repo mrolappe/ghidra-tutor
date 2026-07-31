@@ -682,3 +682,112 @@ the P-code-emulation and live-debugger tooling, should use it — with
   exhaustive index. A Ghidra MCP server that is well-maintained but poorly
   described (no "mcp" or "ghidra" in name/description/topics) would not have
   been found.
+
+## Phase 13 addendum — hands-on build/config verification
+
+A real Ghidra 12.1.2 install and toolchain (`~/ghidra_12.1.2_PUBLIC`, Java
+21, Gradle 8.8, `git`) were available this phase — unlike Phase 12, which
+had no display and ran zero servers. This addendum closes the two Phase 12
+"Unresolved" items about ReVa's build/config that were mechanical inference
+rather than observation, and adds facts read directly from ReVa's source
+that weren't needed for the recommendation itself but are needed to write
+guides 2-4 as fact.
+
+- **Source build against `GHIDRA_INSTALL_DIR=~/ghidra_12.1.2_PUBLIC`
+  confirmed to produce `version=12.1.2`.** Cloned
+  `cyberkaida/reverse-engineering-assistant` at HEAD (2026-07-31), ran
+  `gradle install`; build succeeded in 18s, 9 tasks. Read the resulting
+  `extension.properties` both from the unpacked install
+  (`$GHIDRA_INSTALL_DIR/Ghidra/Extensions/<clone-dir>/extension.properties`)
+  and from the `dist/*.zip` `gradle install` also produces — both read
+  `version=12.1.2` exactly, no placeholder left unresolved. Resolves Phase
+  12's "mechanical inference, not yet confirmed" flag.
+- **New gotcha, not previously documented anywhere in this project's
+  research**: the extension's installed directory name and its dist zip's
+  filename are derived from the **local git clone directory's name**, not
+  from anything in `extension.properties` — `repo.checkout()` has no
+  `settings.gradle` pinning `rootProject.name`, so Gradle's default
+  (project name = containing folder's basename) applies. Cloning into a
+  directory named `reva-build` (this session's test clone) produced
+  `Ghidra/Extensions/reva-build/` and
+  `dist/ghidra_12.1.2_PUBLIC_20260731_reva-build.zip`; cloning into the
+  default `reverse-engineering-assistant` would produce that name instead.
+  Functionally harmless — Ghidra resolves the extension by the `name=ReVa`
+  field inside `extension.properties`, confirmed by reading
+  `ExtensionInstaller`-adjacent code referenced in the Phase 12 notes, not
+  by the folder name — but worth stating plainly in `02-setup.md` since a
+  reader who renames their clone and then greps for `reverse-engineering-assistant`
+  under `Ghidra/Extensions/` won't find it.
+- **`ToolGroup` enum, read directly from `src/main/java/reva/plugin/ToolGroup.java`**:
+  six groups — `CORE_ANALYSIS`, `DATA_AND_TYPES`, `ADVANCED_ANALYSIS`,
+  `DIFF`, `ANNOTATIONS`, `SCRIPTING`. Resolves Phase 12's flag that the
+  `SCRIPTING`-enabled-by-default claim came only from the README/changelog
+  prose: `ConfigManager.java:75` has
+  `DEFAULT_TOOL_GROUP_ENABLED = true`, applied uniformly to every group
+  including `SCRIPTING` (`ConfigManager.java:225-226`) — the default-on
+  claim is now traced to the actual constant, not just README prose.
+- **Tool-to-group mapping, read from `McpServerManager.createProvidersForGroup()`
+  (`src/main/java/reva/server/McpServerManager.java:228-260`)**: renames
+  (`SymbolToolProvider`, `FunctionToolProvider`) live in `CORE_ANALYSIS`, not
+  `ANNOTATIONS` — `ANNOTATIONS` is only comments and bookmarks
+  (`CommentToolProvider`, `BookmarkToolProvider`). `SCRIPTING` is exactly one
+  provider, `ScriptToolProvider` — the arbitrary-Python-execution surface,
+  cleanly separable from every read/rename/retype tool. This matters for
+  guide 4: disabling `Scripting` does **not** disable renames/retypes, only
+  removes code execution — worth being precise about since it would be easy
+  to assume the toggle is broader than it is.
+- **The public-binding warning text, read verbatim from
+  `McpServerManager.approvePublicBinding()`/`buildPublicBindingWarning()`**
+  (`src/main/java/reva/server/McpServerManager.java:407-451`): confirms
+  Phase 12's characterization (hard refusal in headless mode, logs
+  "Refusing to start"; GUI mode shows a consent dialog with allow-once/
+  allow-always) and gives the literal warning string, which explicitly
+  distinguishes "read and modify your Ghidra programs" (always true once
+  publicly bound without an API key) from "and RUN ARBITRARY PYTHON CODE on
+  this host" (conditional on the `Scripting` group being enabled) — used
+  verbatim (lightly excerpted) in `04-verification-and-limits.md`.
+- **Configuration backend and property-key format, read from
+  `src/main/java/reva/plugin/config/{ConfigManager,FileBackend}.java`**:
+  GUI-mode settings live in two Ghidra `ToolOptions` categories, `"ReVa
+  Server Options"` and `"ReVa Tool Groups"`; headless mode loads the same
+  values from a `.properties` file via `FileBackend`, whose `makeKey()`
+  (`FileBackend.java:188-193`) lowercases the category and setting name and
+  joins them with dots — confirmed against `reva/headless/CLAUDE.md`'s own
+  documented example (`reva.server.options.server.port=9090`), and the
+  `reva.tool.groups.scripting=false` key used in `02-setup.md` is the same
+  mechanical derivation, not separately confirmed against a real headless
+  run in this session (no headless launch with a custom `.properties` file
+  was actually executed — flagged as the one remaining inference in this
+  addendum, low risk given the key-derivation function is directly read).
+- **Headless mode's install path is a separate PyPI/`uv` package**
+  (`reverse-engineering-assistant`, providing the `mcp-reva` CLI), not the
+  Ghidra-extension path guide 2 covers for GUI mode — confirmed by reading
+  the README's Headless Mode section directly (not run in this session; `uv`
+  was not confirmed installed/available in this environment, and no network
+  install of the PyPI package was attempted). If a later pass wants headless
+  mode verified as thoroughly as the GUI build, that install and a
+  `claude -p` round-trip against a sample binary is the remaining gap.
+- **`exercises/04-verification-and-limits` uses real captured decompiler
+  output, not hand-transcribed prose**, sourced the same way Phase 11
+  worked: a small Python post-script (`DecompInterface`, one `print` per
+  function) run via `pyghidraRun -H <project> <name> -import
+  01-core-workflows/exercises/sample/sample.bin -postScript
+  DecompileAll.py -scriptPath <dir> -deleteProject`. Reconfirms Phase 11's
+  gotcha rather than rediscovering it the hard way: the plain
+  `analyzeHeadless` entry point fails this specific script with `Ghidra was
+  not started with PyGhidra. Python is not available` (an untagged `.py`
+  script defaults to the PyGhidra provider, which only `pyghidraRun`
+  initializes) — `pyghidraRun -H` accepts the exact same flag set and
+  succeeded on the first try. The sample being a native macOS AArch64
+  Mach-O (this course's platform-agnostic modules build with the system
+  `cc`, not a cross-assembler) didn't need any special handling here — it's
+  imported and decompiled by Ghidra's stock Mach-O loader/x86-independent
+  decompiler pipeline like any other supported binary.
+- **`ReVa/skills/binary-triage/SKILL.md` and `ReVa/skills/deep-analysis/SKILL.md`**,
+  read from the cloned repo, confirmed to exist and to name real ReVa MCP
+  tools (`get-current-program`, `get-memory-blocks`, `get-strings-count`,
+  `get-strings`, `get-symbols-count`, `get-symbols`) matching the tool names
+  used in `03-ai-assisted-workflows.md` — both skills are written for
+  modern (Windows/Linux, import-table-bearing) binaries; adapting their
+  *shape* rather than their literal content to retro platforms is this
+  course's contribution, not something read out of ReVa's own material.
