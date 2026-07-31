@@ -265,28 +265,71 @@ This file only tracks what's done, what's next, and facts later phases need.
   chain all cleanly zero, so the exercise's computed values don't depend on
   a real build to state expected answers.
 
+- Phase 9 — 04-retro-c64: Guides + diagram. Added `04-retro-c64/README.md`
+  (module index + Mermaid PRG-load diagram: 2-byte header → data loaded at
+  that address → BASIC `SYS` stub → ML payload runs) and five guides:
+  6502/6510 recap (registers, addressing modes as Ghidra actually prints
+  them per `6502.slaspec`, fixed `$0100`-`$01FF` stack page,
+  NMI/RESET/IRQ vectors and default `ZERO_PAGE`/`STACK` blocks per
+  `6502.pspec`, and the key platform fact — Ghidra ships only
+  `6502:LE:16:default`/`65C02:LE:16:default`, **no separate 6510
+  variant**, so the 6510's `$00`/`$01` I/O port is invisible to Ghidra's
+  processor spec and shows up as plain zero-page RAM), memory map +
+  bank switching (full RAM/ROM/I-O view tables, `$00`/`$01` control-line
+  bit weights, condensed 7-row no-cartridge mode table, default mode 31),
+  KERNAL/BASIC-ROM references (complete 40-entry `$FF81`-`$FFF3` jump
+  table with names, same unnamed-call recognition problem as Amiga
+  LVOs/Atari `TRAP`s), PRG/cartridge formats (PRG's 2-byte load-address
+  header; CRT's 16-byte file header + `CHIP`-packet structure, both
+  tables derived directly from VICE Manual §17.14's own documented hex
+  dump), and VIC-II/SID registers (full `$D000`-`$D02E` and
+  `$D400`-`$D418` tables). Confirmed **Ghidra 12.1.2 has no native
+  PRG/CRT loader** (checked via `unzip -l` against the shipped `.jar`s
+  rather than source, since this distribution ships compiled loaders —
+  first module to need that method instead of grepping `.java`; zero
+  C64/Commodore/PRG/cartridge-named classes anywhere) and **no
+  `.opinion` file at all under `Processors/6502/`** (unlike 68000, not
+  even pre-wired to a loader pairing). Checked two community options via
+  `gh api`: `jamesham/ghidra-commodore` (has a real `CommodoreCartridgeLoader`
+  for CRT, but zero releases, last commit 2022-01-03, source-only build,
+  and no PRG loader at all) and `tom-seddon/Ghidra6502` (CPU-description/
+  analyzer improvements, not a loader; zero releases, last push
+  2020-07-17, Eclipse-project-only install) — both flagged as
+  real-but-uncertain rather than recommended, a stricter caveat than
+  Phase 5/7 gave `ghidra-amiga`/`ghidraScripts_for_Atari`. All facts
+  verified against Ghidra 12.1.2's `.ldefs`/`.pspec`/`.slaspec` files and
+  `.jar` contents directly, c64-wiki.com's own HTML tables (parsed
+  programmatically, not paraphrased), `sta.c64.org`'s standard KERNAL
+  function reference, and the VICE Emulator Manual; sourcing kept in
+  `04-retro-c64/RESEARCH-NOTES.md`.
+
 ## Next
 
-- Phase 9 — 04-retro-c64: Guides + diagram
-  - Content per PLAN.md: 6502/6510 recap, memory map + bank-switching,
-    KERNAL/BASIC-ROM references in disassembly, PRG/cartridge formats,
-    VIC-II/SID registers. Mermaid diagram: PRG-format layout (module
-    README, same pattern as the Hunk/PRG-TOS diagrams in Phases 5/7).
+- Phase 10 — 04-retro-c64: Exercises + Memory-Map-Explorer HTML
+  - Content per PLAN.md: `exercises/<slug>/{problem.md, solution.md}` for
+    all 5 Phase 9 topics, plus an interactive Memory-Map-Explorer HTML
+    covering `$0000`-`$FFFF` including bank-switching states (same
+    pattern as Phase 6's Custom-Chip-Register-Explorer, but with a mode
+    selector for the bank-switching table from
+    `04-retro-c64/02-memory-map-bank-switching.md` instead of a static
+    map).
   - Model: Sonnet 5.
-  - New CPU family for this course (6502/6510, not 68000) — first module
-    where Ghidra's `Ghidra/Processors/6502` (or similar) SLEIGH definitions
-    become relevant instead of the `68000:BE:32:default` used throughout
-    00/01/02/03. Verify the exact processor-ID string and available
-    variants (6502 vs. 6510 — the C64's CPU has an extra I/O port at
-    `$00`/`$01` the plain 6502 doesn't) against Ghidra 12.1.2 source before
-    writing the guides, the same way each retro module's loader claims were
-    checked against source directly rather than assumed.
-  - Same legal constraint as every retro module: no copyrighted
-    KERNAL/BASIC ROM images bundled or required — guides can *describe*
-    well-documented ROM entry points/addresses (that's public factual
-    information, same treatment the Amiga module gave Kickstart LVOs and
-    this module gave GEMDOS opcodes) without shipping or requiring the ROM
-    binary itself.
+  - Sample program(s): use cc65 (per PLAN.md's legal note — public-domain/
+    homebrew toolchain, no copyrighted ROM needed), unlike 02/03's
+    vasm/vlink 68000 toolchain. No cc65 toolchain is installed in this
+    session's environment either (same situation Phase 6/8 flagged for
+    vasm/vlink) — write `build.sh` to documented cc65 CLI syntax but flag
+    it as unverified/not-run, consistent with those phases' handling.
+    Check whether cc65 has a single-step `.s`-to-`.prg` path or needs a
+    separate linker pass (ca65+ld65) before assuming either shape — the
+    Atari module's Phase 8 note flagged this as worth checking per-
+    toolchain rather than assuming.
+  - Exercise for KERNAL calls should reuse the `$FFD2`/`CHROUT`-style
+    recognition pattern directly from `03-kernal-basic-rom-references.md`
+    rather than researching new KERNAL addresses.
+  - Exercise for PRG format can hand-walk a 2-byte header the same way
+    Phase 6 hand-walked Hunk blocks and Phase 8 hand-walked the PRG/TOS
+    header — no Ghidra loader needed for that one either.
 
 ## Carried-forward notes (continued)
 
@@ -327,3 +370,41 @@ This file only tracks what's done, what's next, and facts later phases need.
   is sourced, not assumed. Worth checking whether cc65 (Phase 9/10's C64
   toolchain) has a similarly simpler single-step path before assuming it
   needs a separate link step too.
+
+- **Ghidra has no separate 6510 language ID** (Phase 9, confirmed directly
+  from `6502.ldefs`): only `6502:LE:16:default` and `65C02:LE:16:default`
+  exist. Every C64 exercise/sample in Phase 10 should expect a plain
+  6502 import — don't look for or reference a "6510" processor ID
+  anywhere in exercise instructions, it doesn't exist in this Ghidra
+  version.
+- **PRG import = manual Raw Binary at the header's load address, always**
+  (Phase 9): confirmed no built-in or reliably-installable community PRG
+  loader exists (see Phase 9's Completed entry above for the
+  `ghidra-commodore`/`Ghidra6502` caveats). Phase 10's PRG-format exercise
+  should walk this manually — read the first 2 bytes as little-endian
+  load address, import the rest as Raw Binary at that address — the same
+  "no loader, hand-walk the header" treatment Phase 6 gave Hunk and
+  Phase 8 gave PRG/TOS.
+- **CRT/cartridge loader situation is weaker than Amiga's/Atari's
+  community options** (Phase 9): `jamesham/ghidra-commodore`'s
+  `CommodoreCartridgeLoader` exists but has zero tagged releases (source-
+  only, last commit 2022-01-03) — don't recommend it as a turnkey install
+  the way Phase 6/7 could recommend `ghidra-amiga`/`ghidraScripts_for_Atari`.
+  If Phase 10 wants a CRT-format exercise, treat it as a hand-walked
+  header exercise (field tables are in
+  `04-retro-c64/04-prg-cartridge-formats.md`) rather than assuming a
+  working loader extension.
+- **Loader-absence checks against a binary distribution use `unzip -l` on
+  the shipped `.jar`s, not `grep` on `.java` source** (Phase 9): this
+  session's `~/ghidra_12.1.2_PUBLIC` install ships compiled loader
+  classes only (`Ghidra/Features/Base/lib/Base.jar` etc.), unlike the
+  full source checkout the Amiga/Atari modules apparently had access to.
+  If a later phase needs another loader-absence check, `unzip -l
+  <jar> | grep -i opinion/.*Loader.class` (plus a cross-jar substring
+  search for platform-specific keywords) is the working method here.
+- **c64-wiki.com's default `$00`/`$01` power-up byte values ($37`/`$2F`,
+  commonly cited elsewhere) weren't confirmed against a fetched source in
+  Phase 9** — only the *behavior* (bits 0-2 output by default, mode 31
+  selected) is sourced. Flagged Unresolved in
+  `04-retro-c64/RESEARCH-NOTES.md`; worth confirming before stating the
+  literal byte values in a later phase's exercise solution.
