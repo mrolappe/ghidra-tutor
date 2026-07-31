@@ -15,7 +15,7 @@ Later modules build on earlier ones — work through them roughly in order.
 | 02 | [retro-amiga](02-retro-amiga/) | 68000, Hunk format, AmigaOS/Kickstart, custom chips |
 | 03 | [retro-atari-st](03-retro-atari-st/) | 68000/TOS, GEMDOS/BIOS/XBIOS, PRG format |
 | 04 | [retro-c64](04-retro-c64/) | 6502/6510, memory map, KERNAL ROM, VIC-II/SID |
-| 05 | [automation-scripting](05-automation-scripting/) | Java/Jython API, Ghidrathon, headless analyzer |
+| 05 | [automation-scripting](05-automation-scripting/) | Java API, Jython/PyGhidra scripting, headless analyzer |
 | 06 | [ai-assisted-ghidra](06-ai-assisted-ghidra/) | MCP server setup, AI-assisted RE workflows |
 
 Each module has numbered guides plus `exercises/<slug>/{problem.md, sample/, solution.md}`.

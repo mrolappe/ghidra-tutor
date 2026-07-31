@@ -350,29 +350,78 @@ This file only tracks what's done, what's next, and facts later phases need.
   used, run from a sibling project (`~/studio/playwright-lernen`) since
   this project itself has no `node_modules`.
 
+- Phase 11 — 05-automation-scripting: Guides + Diagram + Exercises. Added
+  `05-automation-scripting/README.md` (module index + Mermaid sequence
+  diagram of the Headless Analyzer's import→preScript→analyze→postScript→
+  save loop) and three guides: Script Manager & Java API (metadata tags,
+  `GhidraScript` base class, Flat vs. Program API, GhidraDev+Eclipse),
+  Python scripting: Jython (legacy) vs. PyGhidra (the default — see
+  correction below), and the Headless Analyzer (`analyzeHeadless` CLI,
+  pre/post scripts, script search paths, logging, running PyGhidra scripts
+  headlessly via `pyghidraRun -H`). Matched PLAN.md's phase-11 bundling
+  (guides+diagram+exercises in one phase, unlike every prior module's
+  two-phase split) — didn't need re-splitting, module was small enough for
+  one sitting once scoped to 3 guides instead of the original 4-topic
+  framing (see correction below for why it became 3, not 4).
+  **First phase where a real Ghidra install was available in-session**
+  (`~/ghidra_12.1.2_PUBLIC`, plus Java 21/cc/Python 3.11 all present) — a
+  meaningful share of both the research and the exercises are **live-
+  verified**, not just docs-sourced: actually ran `analyzeHeadless` and
+  `pyghidraRun -H` against `01-core-workflows/exercises/sample/sample.bin`
+  and `00-quickstart/exercises/02-first-import-analysis/sample/sample.bin`
+  (both reused as-is, no new sample built — this module is
+  platform-agnostic per PLAN.md's own note) with real test scripts;
+  captured real output for every exercise solution. Sourcing kept in
+  `05-automation-scripting/RESEARCH-NOTES.md`, including what still
+  wasn't independently verified (GUI-mode PyGhidra-launcher error,
+  standalone `pip install pyghidra`, `askXxx()`/`.properties` mechanism
+  beyond the one exercise that uses it).
+  **Correction to PLAN.md's framing**: "Jython scripting, Ghidrathon
+  (Python 3) as the modern path" is stale. In 12.1.2, Jython is now an
+  opt-in Extension (not built in), and Ghidrathon-the-community-project
+  has effectively been superseded by **PyGhidra** — Ghidra's own native-
+  CPython-3 integration (confirmed via `docs/ChangeHistory.md`: PyGhidra
+  began as the DoD Cyber Crime Center's "Pyhidra", GP-4816; untagged `.py`
+  scripts default to PyGhidra since GP-5415; Jython extraction to an
+  Extension is GP-6754). Collapsed the plan's "Jython scripting" +
+  "Ghidrathon" into one guide (`02-python-scripting-jython-pyghidra.md`)
+  covering both real options as they exist today, rather than writing a
+  guide for a tool (Ghidrathon) that isn't the shipped answer anymore.
+  **Real gotcha found and taught, not just documented**: `-scriptPath`
+  *adds* to the default script search paths (every distribution
+  `ghidra_scripts` dir, plus `$USER_HOME/ghidra_scripts`), it doesn't
+  replace them — a script sharing a filename with a built-in one
+  (verified with `ListFunctions.java`, shadowed by
+  `Features/FunctionID/ghidra_scripts/ListFunctions.java`) silently runs
+  the wrong file. Exercise 03 has students reproduce this on purpose, not
+  just read about it.
+
 ## Next
 
-- Phase 11 — 05-automation-scripting: Guides + Diagram + Exercises
-  - Content per PLAN.md: Script Manager + Java-API basics, Jython
-    scripting, Ghidrathon (Python 3) as the modern path, Headless Analyzer
-    for batch processing — plus a Mermaid sequence diagram of the Headless
-    Analyzer flow, and exercises/solutions. PLAN.md's phase table bundles
-    guides+diagram+exercises into one phase here (unlike the two-phase
-    guides/exercises split used for every module so far) — re-split at
-    the start of the session if it turns out too large for one sitting,
-    per PLAN.md's own note that the table is a starting split, not a
-    rigid requirement.
-  - Model: Sonnet 5.
-  - This module is platform-agnostic (not tied to Amiga/Atari/C64) — it
-    can reuse any already-built sample binary from earlier modules for its
-    scripting-exercise targets rather than building a new one; check
-    00-quickstart's or 01-core-workflows's plain-`cc`-built samples first
-    since those were actually compiled/verified in this environment,
-    unlike the retro modules' unverified vasm/cc65 builds.
-  - `01-core-workflows/06-scripting-outlook.md` already exists as a short
-    preview pointing forward to this module — read it first so 05's
-    guides pick up from where it left off rather than re-covering the
-    same ground.
+- Phase 12 — 06-ai-assisted-ghidra: MCP research + recommendation +
+  architecture diagram.
+  - Content per PLAN.md: research and recommend a concrete Ghidra MCP
+    server (weighing maintenance status, security/trust boundaries — an
+    LLM gets tool access to an RE tool — and future-proofing), plus a
+    Mermaid architecture diagram (Ghidra ↔ MCP server ↔ AI client ↔ user,
+    including trust boundaries).
+  - **Model recommendation from PLAN.md: Opus**, for this one evaluation
+    step specifically (optional, not a hard requirement — Sonnet 5 is
+    fine if Opus isn't available/wanted).
+  - **Head start, found during Phase 11, not yet evaluated**: this
+    session's machine already has a `GhidraMCP` extension installed
+    (`~/Library/ghidra/ghidra_12.1.2_PUBLIC/Extensions/GhidraMCP/
+    extension.properties`: version `12.1.2` — already pinned to this
+    course's exact Ghidra release; author "Ben Ethington", i.e. the
+    LaurieWired GhidraMCP project). Phase 12 should do its own from-
+    scratch competitive research rather than assume this is *the*
+    recommendation (that's still an open question — other MCP servers
+    exist and need weighing), but it means firsthand hands-on evaluation
+    is possible here, not just changelog/README research the way Phase 11
+    had to lean on for PyGhidra.
+  - Phase 13 (setup/workflows/exercises for whichever server gets
+    recommended) depends on this phase's pick — don't start it in the
+    same session per the standard one-phase-per-session rule.
 
 ## Carried-forward notes (continued)
 
@@ -505,3 +554,20 @@ This file only tracks what's done, what's next, and facts later phases need.
   (`~/studio/playwright-lernen`) that already has the package installed —
   worth checking for a similar sibling install (or a global one) before
   assuming Playwright needs a fresh `npm install` in a later phase.
+
+- **A real Ghidra 12.1.2 install is available in this session's
+  environment** (Phase 11, first phase to find/use this):
+  `~/ghidra_12.1.2_PUBLIC`, launchable (`support/analyzeHeadless`,
+  `support/pyghidraRun`) with Java 21, `cc`, and Python 3.11 all present
+  and working. User settings/extensions live separately at
+  `~/Library/ghidra/ghidra_12.1.2_PUBLIC/` and already have `Jython`,
+  `ghidra-amiga`, and `GhidraMCP` extensions installed (the latter
+  version-pinned to `12.1.2` — see Phase 12's Next-note above). No
+  display/X server available, so GUI-mode Ghidra (`ghidraRun` proper)
+  can't be launched or screenshotted — only headless (`analyzeHeadless`,
+  `pyghidraRun -H`) is actually runnable here; GUI-only claims still need
+  the "not independently verified" caveat retro modules used for
+  emulator/toolchain claims. Later phases (especially 06's MCP work,
+  which involves an actual RE tool + AI-tool-access trust boundary) should
+  check for this install before assuming Ghidra is unavailable the way
+  Phases 5-10 did — it changes what "verified" can mean going forward.
