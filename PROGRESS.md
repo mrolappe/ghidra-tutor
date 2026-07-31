@@ -247,34 +247,46 @@ This file only tracks what's done, what's next, and facts later phases need.
   preferred as the citable link) and Ghidra 12.1.2 source directly;
   sourcing kept in `03-retro-atari-st/RESEARCH-NOTES.md`.
 
+- Phase 8 — 03-retro-atari-st: Exercises. Added
+  `exercises/<slug>/{problem.md, solution.md}` for all 3 Phase 7 topics
+  (`01-amiga-atari-differences`, `02-gemdos-bios-xbios-calls`,
+  `03-prg-tos-executable-format`). No dedicated interactive HTML for this
+  module, per PLAN.md's visual-materials table (Amiga/Atari share one row —
+  Phase 6's Custom-Chip-Register-Explorer). Exercises 01/02 share one
+  hand-written 68000 program (`exercises/sample/sample.s`, vasm Motorola
+  syntax) demonstrating the basepage-read pattern plus two already-verified
+  GEMDOS `TRAP #1` calls (`Mshrink` `$4A`, `Super` `$20` — reused straight
+  from the Phase 7 guide's own sourced snippets rather than researching new
+  BIOS/XBIOS opcode numbers for the sample, since one verified GEMDOS
+  TRAP-call pattern is enough to teach the recognition shape). Exercise 03
+  needs a real PRG header to hex-walk by hand (same no-Ghidra-loader
+  treatment Phase 6 gave the Hunk block walk), so `sample.s` is deliberately
+  code-only (no data/bss section) — keeps `PRG_dsize`/`PRG_bsize`/the fixup
+  chain all cleanly zero, so the exercise's computed values don't depend on
+  a real build to state expected answers.
+
 ## Next
 
-- Phase 8 — 03-retro-atari-st: Exercises
-  - Content per PLAN.md: `exercises/<slug>/{problem.md, solution.md}` for
-    the three Phase 7 topics (`01-amiga-atari-differences`,
-    `02-gemdos-bios-xbios-calls`, `03-prg-tos-executable-format`). No
-    dedicated interactive HTML for this module per PLAN.md's
-    visual-materials table (02-retro-amiga/03-retro-atari-st share one
-    row — the Custom-Chip-/Register-Explorer already built in Phase 6 for
-    Amiga; Atari doesn't get its own second interactive piece).
+- Phase 9 — 04-retro-c64: Guides + diagram
+  - Content per PLAN.md: 6502/6510 recap, memory map + bank-switching,
+    KERNAL/BASIC-ROM references in disassembly, PRG/cartridge formats,
+    VIC-II/SID registers. Mermaid diagram: PRG-format layout (module
+    README, same pattern as the Hunk/PRG-TOS diagrams in Phases 5/7).
   - Model: Sonnet 5.
-  - Sample binaries: a hand-written 68000 GEMDOS program (`.s`, vasm
-    Motorola syntax + vlink `-bataritos` or equivalent target, following
-    Phase 6's `exercises/sample/` pattern) demonstrating basepage access,
-    at least one GEMDOS/BIOS/XBIOS TRAP call, and a real PRG header to
-    inspect by hand — same legal constraint as every retro module
-    (self-assembled only, no copyrighted TOS ROM; EmuTOS is noted in
-    `RESEARCH-NOTES.md` §5 as a legally clean ROM-level substitute if a
-    later phase ever wants boot-ROM material, not needed for this one).
-  - Same environment caveat as Phase 6: no 68000 toolchain
-    (vasm/vlink) is installed in this session's environment — verify the
-    build script's target flags against actual vasm/vlink docs for
-    Atari/GEMDOS output (`-Fbin`/`-bataritos` or whatever the real flag
-    is — don't assume the Amiga `-bamigahunk` naming pattern carries
-    over) and flag as unverified/not-run the same way Phase 6 did.
-  - Open items carried from Phase 1 and Phase 3: several quickstart/
-    core-workflows facts are still flagged "verify on an installed copy" —
-    not blocking, worth a sanity check whenever Ghidra is actually running.
+  - New CPU family for this course (6502/6510, not 68000) — first module
+    where Ghidra's `Ghidra/Processors/6502` (or similar) SLEIGH definitions
+    become relevant instead of the `68000:BE:32:default` used throughout
+    00/01/02/03. Verify the exact processor-ID string and available
+    variants (6502 vs. 6510 — the C64's CPU has an extra I/O port at
+    `$00`/`$01` the plain 6502 doesn't) against Ghidra 12.1.2 source before
+    writing the guides, the same way each retro module's loader claims were
+    checked against source directly rather than assumed.
+  - Same legal constraint as every retro module: no copyrighted
+    KERNAL/BASIC ROM images bundled or required — guides can *describe*
+    well-documented ROM entry points/addresses (that's public factual
+    information, same treatment the Amiga module gave Kickstart LVOs and
+    this module gave GEMDOS opcodes) without shipping or requiring the ROM
+    binary itself.
 
 ## Carried-forward notes (continued)
 
@@ -304,3 +316,14 @@ This file only tracks what's done, what's next, and facts later phases need.
   asserted either way in the guide text. A future pass could resolve this
   by reading EmuTOS's (GPL'd, source-available) `Pexec()` implementation
   directly.
+- **`vasmm68k_mot -Ftos` builds a real PRG in one step, no `vlink` needed**
+  (Phase 8, confirmed via a documented toolchain-setup command — not
+  guessed): unlike Amiga's Hunk build, which needs a separate
+  `vlink -bamigahunk` link pass, a single-object-file Atari program can go
+  straight from `.s` to `.prg`/`.tos` with one `vasmm68k_mot -Ftos` call.
+  `exercises/sample/build.sh` uses this for `sample.prg`; still flagged
+  unverified/not-run like Phase 6's script, since no 68000 toolchain is
+  installed in this session's environment — but the *command shape* itself
+  is sourced, not assumed. Worth checking whether cc65 (Phase 9/10's C64
+  toolchain) has a similarly simpler single-step path before assuming it
+  needs a separate link step too.
