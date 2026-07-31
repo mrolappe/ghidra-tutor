@@ -146,37 +146,99 @@ This file only tracks what's done, what's next, and facts later phases need.
   Ghidra 12.1.2 source directly — not secondary summaries); sourcing kept in
   `02-retro-amiga/RESEARCH-NOTES.md`.
 
+- Phase 6 — 02-retro-amiga: Exercises + Custom-Chip-Register-Explorer HTML.
+  Added `exercises/<slug>/{problem.md, solution.md}` for all 5 Phase 5
+  topics (`01-68000-recap`, `02-hunk-executable-format`,
+  `03-exec-library-kickstart`, `04-custom-chip-registers`,
+  `05-copy-protection-patterns`). Exercises 01/03/04 share one hand-written
+  68000 assembly program (`exercises/sample/sample.s`, vasm Motorola
+  syntax) built two ways by `exercises/sample/build.sh`: a flat binary
+  (`sample.bin`, `-Fbin`) for direct Raw Binary import, and a real Hunk
+  executable (`sample.hunk`, `-Fhunk` + `vlink -bamigahunk`) so exercise 02
+  can walk genuine `HUNK_*` block IDs by hand with `od`/hex viewer — no
+  Ghidra loader needed for that one. Exercise 05 (copy-protection patterns)
+  uses three invented pseudo-disassembly snippets instead of a sample
+  binary (no real protected disks; recognition exercise, per the module's
+  framing). Resolved the open loader-decision item from Phase 5: checked
+  `BartmanAbyss/ghidra-amiga`'s GitHub releases via `gh api` — actively
+  maintained (latest tag `20260128`), but each release build targets one
+  specific Ghidra point release (currently 12.0.1, not this course's
+  pinned 12.1.2); exercise 03 documents this version gap directly and
+  treats the extension as optional/Part B, with Part A doing the LVO
+  pattern-recognition manually via raw import (no loader dependency at
+  all). Added `02-retro-amiga/custom-chip-register-explorer.html`
+  (self-contained, no dependencies): a clickable $DFF000–$DFF11F register
+  map color-coded by chip (Agnus/Denise/Paula, jointly-owned registers
+  shown as a diagonal split) plus a filterable/sortable table view: colors
+  taken from the dataviz skill's validated 3-slot categorical palette
+  (blue/orange/aqua — passes all-pairs CVD checks in both light and dark
+  in both modes without needing a 4th color for "joint"). Verified with a
+  headless Playwright render (41 register cells, 41 table rows, click and
+  filter both functional, zero console/page errors, light+dark
+  screenshots checked) since no browser interaction is otherwise possible
+  in this environment.
+
 ## Carried-forward notes (continued)
+
+- **No 68000 toolchain (`vasm`/`vlink`) is installed in this session's
+  environment** — `exercises/sample/build.sh` (Phase 6) is written to the
+  documented vasm/vlink CLI syntax but has **not** been run/verified end to
+  end, unlike 00-quickstart/01-core-workflows' `cc`-based `build.sh`
+  scripts which were actually executed. Flagged in the script's own
+  comment. Worth an actual build+import sanity check against a real
+  install before trusting exact byte offsets; exercises were deliberately
+  written to ask students to locate patterns by mnemonic/structure, not by
+  hardcoded addresses, so they should survive minor assembler-output
+  differences regardless.
+- **`ghidra-amiga` version-pinning**: confirmed (Phase 6, via `gh api
+  repos/BartmanAbyss/ghidra-amiga/releases`) that each release build
+  targets one specific Ghidra point release, currently 12.0.1 — a
+  minor-version gap against this course's pinned 12.1.2. If a later phase
+  (03-retro-atari-st or 04-retro-c64) needs a similar community-extension
+  recommendation, check its releases the same way rather than assuming a
+  prebuilt zip matches the pinned Ghidra version.
+- **DMACON/INTENA/INTREQ "SET/CLR" bit-15 write convention** (verified
+  Phase 6, added to `RESEARCH-NOTES.md`'s Phase 6 addendum, not yet folded
+  into `04-custom-chip-registers.md` itself): bit 15 of a written word
+  selects set-vs-clear for whichever other bits are `1`; this is
+  independent of and worth distinguishing from individual bit-name tables
+  like `DMAEN` (bit 9 of `DMACON`, not previously verified in Phase 5).
+- **`ghidra-amiga` internals are still unverified** (loader class,
+  relocation-resolution timing, one-block-per-hunk-or-not) — Phase 6's
+  exercise 03 works around this by treating the extension as optional and
+  keeping the primary path loader-independent; still worth a closer look
+  if a future phase wants to lean on the extension more directly.
 
 - **Ghidra has no native Amiga/Hunk loader** (confirmed against the
   `Ghidra_12.1.2_build` source tree: no Hunk-related `Loader` class, no
   `hunk`/`amiga` hits repo-wide, `68000.opinion` doesn't pair 68000 with a
-  Hunk loader). Phase 6 exercises for this module will need either the
-  community extension `BartmanAbyss/ghidra-amiga` (unverified internals —
-  worth reviewing before recommending it hands-on) or a manual
-  raw-binary-import workaround per hunk. Decide which before writing an
-  exercise that has learners actually import a Hunk binary.
+  Hunk loader) — see the `ghidra-amiga` notes above for how Phase 6's
+  exercises worked around this.
 - `OpenLibrary`'s LVO (`-552`) is well-corroborated across secondary sources
   but wasn't pinned to the literal NDK `.fd`/pragma file in Phase 5's
   research pass — flagged in `02-retro-amiga/RESEARCH-NOTES.md` under
-  Unresolved, not blocking but worth a check if Phase 6 needs more LVO
-  constants than just this one example.
+  Unresolved, not blocking but worth a check if a later phase needs more
+  LVO constants than just this one example.
 
 ## Next
 
-- Phase 6 — 02-retro-amiga: Exercises + Custom-Chip/Register-Explorer HTML
-  - Content per PLAN.md: `exercises/<slug>/{problem.md, solution.md}` for
-    the 5 Phase 5 topics, using self-assembled 68000 samples (vasm/vbcc or
-    vasm+vlink — NOT the plain-`cc` pattern from 00-quickstart/
-    01-core-workflows, see the platform-toolchain note above) or
-    public-domain/homebrew/demoscene material — no copyrighted ROMs/games.
-    Plus the interactive HTML: a custom-chip/register explorer (hover/click
-    an address range → chip + function), per PLAN.md's visual/interactive
-    materials table (`02-retro-amiga` row).
+- Phase 7 — 03-retro-atari-st: Guides + Diagram
+  - Content per PLAN.md: 68000/TOS differences from Amiga (build on
+    `02-retro-amiga/01-68000-recap.md` rather than repeating the 68000
+    recap — reference it), GEMDOS/BIOS/XBIOS call recognition, the
+    PRG/TOS executable header format. Plus a Mermaid diagram of the
+    PRG/TOS executable layout (module's row in PLAN.md's visual-materials
+    table).
   - Model: Sonnet 5.
-  - Before scripting an exercise that imports a real Hunk binary, resolve
-    the open item above (which loader path — `ghidra-amiga` extension vs.
-    manual raw-binary import per hunk).
+  - Same legal constraint as 02-retro-amiga: self-assembled/public-domain
+    material only, no copyrighted TOS ROM/game content — this module's
+    guides can reference documented TOS/GEMDOS behavior without needing
+    ROM contents, same as 02-retro-amiga never needed Kickstart ROM bytes.
+  - Verify whether Ghidra has a native PRG/TOS loader before assuming one
+    is needed (check the same way Phase 5 checked for a Hunk loader —
+    `Loader` classes under `ghidra/app/util/opinion/`, plus an
+    `.opinion` file check for the 68000 language) — don't assume it's
+    missing just because Hunk was.
   - Open items carried from Phase 1 and Phase 3: several quickstart/
     core-workflows facts are still flagged "verify on an installed copy" —
     not blocking, worth a sanity check whenever Ghidra is actually running.

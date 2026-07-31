@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Amiga Custom Chip Register Explorer</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface: #fcfcfb; --text: #0b0b0b; --text-2: #52514e;
+    --muted: #898781; --grid: #e1e0d9; --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --agnus: #2a78d6; --denise: #eb6834; --paula: #1baf7a;
+    --cell-empty: #eceae4; --row-hover: #f2f1ec; --input-bg: #fff;
+    --accent: #2a78d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --text: #ffffff; --text-2: #c3c2b7;
+      --muted: #898781; --grid: #2c2c2a; --baseline: #383835;
+      --border: rgba(255,255,255,0.10);
+      --agnus: #3987e5; --denise: #d95926; --paula: #199e70;
+      --cell-empty: #242422; --row-hover: #26261f; --input-bg: #242422;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --text: #ffffff; --text-2: #c3c2b7;
+    --muted: #898781; --grid: #2c2c2a; --baseline: #383835;
+    --border: rgba(255,255,255,0.10);
+    --agnus: #3987e5; --denise: #d95926; --paula: #199e70;
+    --cell-empty: #242422; --row-hover: #26261f; --input-bg: #242422;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 1.5rem; background: var(--page); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  h1 { font-size: 1.3rem; margin: 0 0 .25rem; }
+  p.sub { color: var(--text-2); margin: 0 0 1rem; font-size: .9rem; max-width: 68ch; }
+  .layout { display: grid; grid-template-columns: minmax(280px, 460px) 1fr; gap: 1.5rem; align-items: start; }
+  @media (max-width: 780px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1rem;
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: .9rem; margin-bottom: 1rem; font-size: .82rem; color: var(--text-2); }
+  .legend .swatch { display: inline-block; width: .8rem; height: .8rem; border-radius: 3px; margin-right: .35rem; vertical-align: -1px; }
+  .sw-a { background: var(--agnus); }
+  .sw-d { background: var(--denise); }
+  .sw-p { background: var(--paula); }
+  .sw-joint { background: linear-gradient(135deg, var(--agnus) 33%, var(--denise) 33% 66%, var(--paula) 66%); }
+
+  .grid-wrap { overflow-x: auto; }
+  .regmap {
+    display: grid;
+    grid-template-columns: repeat(16, 1.9rem);
+    gap: 3px;
+    width: max-content;
+  }
+  .cell {
+    width: 1.9rem; height: 1.9rem; border-radius: 4px; background: var(--cell-empty);
+    cursor: default; display: flex; align-items: center; justify-content: center;
+    font-size: .6rem; color: var(--text-2); border: 1px solid transparent;
+    position: relative;
+  }
+  .cell.reg { cursor: pointer; color: #fff; font-weight: 600; }
+  .cell.reg:hover, .cell.reg:focus-visible { outline: 2px solid var(--text); outline-offset: 1px; }
+  .cell.reg.pinned { outline: 2px solid var(--text); outline-offset: 1px; }
+  .cell.a { background: var(--agnus); }
+  .cell.d { background: var(--denise); }
+  .cell.p { background: var(--paula); }
+  .cell.joint { background: linear-gradient(135deg, var(--agnus) 33%, var(--denise) 33% 66%, var(--paula) 66%); }
+  .rowlabel { font-size: .68rem; color: var(--muted); display: flex; align-items: center; padding-right: .3rem; }
+
+  .detail { margin-top: 1rem; padding-top: .9rem; border-top: 1px solid var(--grid); }
+  .detail h2 { font-size: 1rem; margin: 0 0 .3rem; font-family: ui-monospace, monospace; }
+  .detail .offset { color: var(--text-2); font-size: .85rem; margin: 0 0 .5rem; font-family: ui-monospace, monospace; }
+  .detail p { margin: .3rem 0; font-size: .88rem; }
+  .detail .empty { color: var(--muted); font-style: italic; font-size: .88rem; }
+  .tag { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .72rem; font-weight: 600; color: #fff; margin-right: .3rem; }
+
+  input#filter {
+    width: 100%; padding: .5rem .7rem; font-size: .95rem;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--input-bg); color: var(--text); margin-bottom: .75rem;
+  }
+  .count { color: var(--muted); font-size: .82rem; margin-bottom: .6rem; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; padding: .4rem .5rem; border-bottom: 1px solid var(--grid); font-size: .82rem; }
+  th { position: sticky; top: 0; background: var(--surface); cursor: pointer; user-select: none; white-space: nowrap; }
+  th:hover { color: var(--accent); }
+  tr.reg-row { cursor: pointer; }
+  tr.reg-row:hover td, tr.reg-row.pinned td { background: var(--row-hover); }
+  tr.hidden { display: none; }
+  code.off { font-family: ui-monospace, monospace; }
+</style>
+</head>
+<body>
+<h1>Amiga Custom Chip Register Explorer — 02-retro-amiga</h1>
+<p class="sub">Chip-mapped registers at <code>$DFF000</code>–<code>$DFF11F</code>, word-addressed.
+Click (or hover) a colored cell for details, or use the filter/table on the right. Source:
+AHRM Appendix B — see <a href="04-custom-chip-registers.md">04-custom-chip-registers.md</a> for
+full sourcing, including the Audio-channel-mirror pattern (channels 1–3 derived here at
+<code>+$10</code>/<code>+$20</code>/<code>+$30</code> from the documented Audio 0 block) and the
+DMACON/INTENA/INTREQ "SET/CLR" write convention noted in this module's
+<code>RESEARCH-NOTES.md</code> Phase 6 addendum.</p>
+
+<div class="layout">
+  <div class="panel">
+    <div class="legend">
+      <span><span class="swatch sw-a"></span>Agnus</span>
+      <span><span class="swatch sw-d"></span>Denise</span>
+      <span><span class="swatch sw-p"></span>Paula</span>
+      <span><span class="swatch sw-joint"></span>jointly owned (split shows which)</span>
+    </div>
+    <div class="grid-wrap">
+      <div class="regmap" id="regmap"></div>
+    </div>
+    <div class="detail" id="detail">
+      <p class="empty">Hover or click a register to see details here.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <input id="filter" type="text" placeholder="Filter (e.g. &quot;audio&quot;, &quot;paula&quot;, &quot;$096&quot;, &quot;read&quot;)…" autofocus>
+    <div class="count" id="count"></div>
+    <div class="grid-wrap">
+      <table id="tbl">
+        <thead>
+          <tr><th data-col="0">Register</th><th data-col="1">Offset</th><th data-col="2">R/W</th><th data-col="3">Chip</th><th data-col="4">Function</th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// offset: decimal byte offset from $DFF000. chip: "A"/"D"/"P" or combos ("AD","AP","ADP").
+const audioChannel = (n, base) => ([
+  [`AUD${n}LCH`, base,      'W', 'A', `Audio ch.${n} sample pointer (high word)`],
+  [`AUD${n}LCL`, base+2,    'W', 'A', `Audio ch.${n} sample pointer (low word)`],
+  [`AUD${n}LEN`, base+4,    'W', 'P', `Audio ch.${n} length`],
+  [`AUD${n}PER`, base+6,    'W', 'P', `Audio ch.${n} period`],
+  [`AUD${n}VOL`, base+8,    'W', 'P', `Audio ch.${n} volume`],
+  [`AUD${n}DAT`, base+10,   'W', 'P', `Audio ch.${n} data (feeds Paula's DAC)`],
+]);
+
+const data = [
+  ['DMACONR', 0x002, 'R', 'AP', 'DMA control (+ blitter status) — read'],
+  ['INTENAR', 0x01C, 'R', 'P', 'Interrupt enable bits — read'],
+  ['INTREQR', 0x01E, 'R', 'P', 'Interrupt request bits — read'],
+  ['BLTCON0', 0x040, 'W', 'A', 'Blitter control register 0'],
+  ['BLTCON1', 0x042, 'W', 'A', 'Blitter control register 1'],
+  ['COP1LCH', 0x080, 'W', 'A', 'Copper first location register (high word)'],
+  ['COP1LCL', 0x082, 'W', 'A', 'Copper first location register (low word)'],
+  ['COP2LCH', 0x084, 'W', 'A', 'Copper second location register (high word)'],
+  ['COP2LCL', 0x086, 'W', 'A', 'Copper second location register (low word)'],
+  ['COPJMP1', 0x088, 'strobe', 'A', 'Restart Copper at first location'],
+  ['COPJMP2', 0x08A, 'strobe', 'A', 'Restart Copper at second location'],
+  ['DIWSTRT', 0x08E, 'W', 'A', 'Display window start position'],
+  ['DIWSTOP', 0x090, 'W', 'A', 'Display window stop position'],
+  ['DMACON', 0x096, 'W', 'ADP', 'DMA control — write (clear/set; bit15 = SET/CLR, e.g. bit9 DMAEN)'],
+  ['INTENA', 0x09A, 'W', 'P', 'Interrupt enable bits — write (clear/set)'],
+  ['INTREQ', 0x09C, 'W', 'P', 'Interrupt request bits — write (clear/set)'],
+  ...audioChannel(0, 0x0A0),
+  ...audioChannel(1, 0x0B0),
+  ...audioChannel(2, 0x0C0),
+  ...audioChannel(3, 0x0D0),
+  ['BPLCON0', 0x100, 'W', 'AD', 'Bitplane control (misc. display bits)'],
+];
+
+const chipClass = c => c.length === 1 ? c.toLowerCase() : 'joint';
+const chipLabel = c => ({A:'Agnus', D:'Denise', P:'Paula'}[c] || [...c].map(x=>({A:'Agnus',D:'Denise',P:'Paula'}[x])).join(' + '));
+const byOffset = new Map(data.map(r => [r[1], r]));
+
+// --- register map grid: word cells from $000 to $11E ---
+const regmap = document.getElementById('regmap');
+const CELLS_PER_ROW = 16;
+const MAX_OFFSET = 0x120;
+let pinnedOffset = null;
+
+function showDetail(reg) {
+  const el = document.getElementById('detail');
+  if (!reg) { el.innerHTML = '<p class="empty">Hover or click a register to see details here.</p>'; return; }
+  const [name, off, rw, chip, desc] = reg;
+  el.innerHTML = `
+    <h2>${name}</h2>
+    <p class="offset">$DFF${off.toString(16).toUpperCase().padStart(3,'0')} — ${rw === 'strobe' ? 'strobe (write-triggered)' : rw === 'R' ? 'read' : 'write'}</p>
+    <p><span class="tag" style="background:${chip.length===1 ? `var(--${{A:'agnus',D:'denise',P:'paula'}[chip]})` : 'linear-gradient(135deg,var(--agnus),var(--denise),var(--paula))'}">${chipLabel(chip)}</span></p>
+    <p>${desc}</p>`;
+}
+
+regmap.style.gridTemplateColumns = `2.6rem repeat(${CELLS_PER_ROW}, 1.9rem)`;
+for (let base = 0; base < MAX_OFFSET; base += CELLS_PER_ROW * 2) {
+  const label = document.createElement('div');
+  label.className = 'rowlabel';
+  label.textContent = '$' + base.toString(16).toUpperCase().padStart(3,'0');
+  regmap.appendChild(label);
+  for (let i = 0; i < CELLS_PER_ROW; i++) {
+    const off = base + i * 2;
+    const reg = byOffset.get(off);
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (reg ? ` reg ${chipClass(reg[3])}` : '');
+    if (reg) {
+      cell.tabIndex = 0;
+      cell.setAttribute('role', 'button');
+      cell.setAttribute('aria-label', `${reg[0]}, offset $${off.toString(16)}`);
+      cell.dataset.offset = off;
+      cell.addEventListener('mouseenter', () => { if (pinnedOffset === null) showDetail(reg); });
+      cell.addEventListener('mouseleave', () => { if (pinnedOffset === null) showDetail(null); });
+      const activate = () => {
+        pinnedOffset = pinnedOffset === off ? null : off;
+        document.querySelectorAll('.cell.pinned').forEach(c => c.classList.remove('pinned'));
+        showDetail(pinnedOffset === null ? null : reg);
+        if (pinnedOffset !== null) cell.classList.add('pinned');
+      };
+      cell.addEventListener('click', activate);
+      cell.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); } });
+    }
+    regmap.appendChild(cell);
+  }
+}
+
+// --- filterable/sortable table (also serves as the accessible list view) ---
+const tbody = document.getElementById('rows');
+const filterInput = document.getElementById('filter');
+const countEl = document.getElementById('count');
+
+function render() {
+  tbody.innerHTML = data.map(row => {
+    const [name, off, rw, chip, desc] = row;
+    const offStr = '$DFF' + off.toString(16).toUpperCase().padStart(3, '0');
+    return `<tr class="reg-row" data-offset="${off}">` +
+      `<td>${name}</td><td><code class="off">${offStr}</code></td><td>${rw}</td><td>${chipLabel(chip)}</td><td>${desc}</td>` +
+      `</tr>`;
+  }).join('');
+  tbody.querySelectorAll('tr.reg-row').forEach(tr => {
+    tr.addEventListener('click', () => {
+      const off = +tr.dataset.offset;
+      const reg = byOffset.get(off);
+      showDetail(reg);
+      document.querySelectorAll('.cell.pinned, tr.pinned').forEach(c => c.classList.remove('pinned'));
+      tr.classList.add('pinned');
+      const cell = regmap.querySelector(`.cell[data-offset="${off}"]`);
+      if (cell) cell.classList.add('pinned');
+      pinnedOffset = off;
+    });
+  });
+}
+render();
+
+function applyFilter() {
+  const q = filterInput.value.trim().toLowerCase();
+  let shown = 0;
+  for (const tr of tbody.rows) {
+    const match = q === '' || tr.textContent.toLowerCase().includes(q);
+    tr.classList.toggle('hidden', !match);
+    if (match) shown++;
+  }
+  countEl.textContent = `${shown} / ${data.length} registers`;
+}
+filterInput.addEventListener('input', applyFilter);
+applyFilter();
+
+let sortState = { col: -1, asc: true };
+document.querySelectorAll('th').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = +th.dataset.col;
+    sortState.asc = sortState.col === col ? !sortState.asc : true;
+    sortState.col = col;
+    data.sort((a, b) => {
+      const av = String(a[col]), bv = String(b[col]);
+      const cmp = av.localeCompare(bv, undefined, { numeric: true });
+      return sortState.asc ? cmp : -cmp;
+    });
+    render();
+    applyFilter();
+  });
+});
+</script>
+</body>
+</html>

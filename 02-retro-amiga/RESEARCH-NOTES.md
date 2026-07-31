@@ -435,3 +435,32 @@ Two different kinds of sources feed this module, cited distinctly per fact:
   SLEIGH source directly, not from observing the Listing window on a real
   import — worth a sanity check against an installed 12.1.2 with an actual
   68000 binary once convenient.
+
+---
+
+## Phase 6 addendum — exercises research
+
+- **`ghidra-amiga` release/version status** (resolves the open item from
+  Phase 5 §"Unresolved"): checked via `gh api
+  repos/BartmanAbyss/ghidra-amiga/releases` — the project is actively
+  maintained (latest release tag `20260128`, ~6 months old as of this
+  phase), but each release build targets one specific Ghidra point release
+  (`20260128`'s only asset is
+  `ghidra_12.0.1_PUBLIC_20260128_ghidra-amiga.zip` — built for 12.0.1, not
+  this course's pinned 12.1.2). Internals (loader class, relocation
+  handling, one-block-per-hunk-or-not) are still unverified, as noted in
+  Phase 5. Exercise 03 documents this version gap directly rather than
+  assuming the prebuilt zip is a drop-in match.
+- **`DMACON`/`INTENA` "SET/CLR" write convention** (bit 15 of the written
+  word selects set-vs-clear for whichever other bits are `1`; `DMAEN` is
+  bit 9 of `DMACON`, not bit 13 as an earlier draft of the sample
+  incorrectly assumed): confirmed via the Amiga Hardware Reference
+  Manual's DMA Control chapter, `amigadev.elowar.com/read/ADCD_2.1/
+  Hardware_Manual_guide/node0170.html` ("7 System Control Hardware / DMA
+  Control") and the DMACON/DMACONR register-summary page at
+  `amigadev.elowar.com/read/ADCD_2.1/Hardware_Manual_guide/node002F.html`.
+  Not previously verified in Phase 5 (that guide only tabulated register
+  names/offsets/chip ownership, not individual bit meanings) — worth
+  folding a short "SET/CLR convention" note into
+  `04-custom-chip-registers.md` itself if a future pass revisits that
+  guide.
