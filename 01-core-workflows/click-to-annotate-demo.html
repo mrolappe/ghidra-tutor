@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Click-to-Annotate Decompiler Demo — 01-core-workflows</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #ffffff; --fg: #1a1a1a; --muted: #666; --border: #ddd;
+    --code-bg: #f7f7f7; --accent: #2a5db0; --accent-bg: #dbe6fb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1a1a1a; --fg:#e8e8e8; --muted:#999; --border:#3a3a3a;
+      --code-bg:#222; --accent:#7aa7e8; --accent-bg:#2a3f63; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 1.5rem; background: var(--bg); color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  h1 { font-size: 1.3rem; margin: 0 0 .25rem; }
+  p.sub { color: var(--muted); margin: 0 0 1rem; font-size: .9rem; max-width: 70ch; }
+  .layout { display: flex; gap: 1.25rem; flex-wrap: wrap; align-items: flex-start; }
+  .panel {
+    border: 1px solid var(--border); border-radius: 8px; padding: 1rem;
+    background: var(--code-bg);
+  }
+  #code-panel { flex: 1 1 480px; min-width: 320px; overflow-x: auto; }
+  #code-panel h2, #info-panel h2 { font-size: .85rem; text-transform: uppercase;
+    letter-spacing: .04em; color: var(--muted); margin: 0 0 .6rem; }
+  pre { margin: 0; font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: .85rem; line-height: 1.5; white-space: pre; }
+  .tok { cursor: pointer; border-radius: 3px; padding: 0 1px; }
+  .tok:hover { background: var(--accent-bg); }
+  .tok.active { background: var(--accent); color: var(--bg); }
+  #info-panel { flex: 1 1 320px; min-width: 280px; min-height: 12rem; }
+  #info-title { font-family: ui-monospace, monospace; font-size: .95rem;
+    color: var(--accent); margin: 0 0 .5rem; }
+  #info-body { font-size: .9rem; line-height: 1.5; }
+  #info-body a { color: var(--accent); }
+  .placeholder { color: var(--muted); font-style: italic; }
+</style>
+</head>
+<body>
+<h1>Click-to-Annotate: Decompiler Output — 01-core-workflows</h1>
+<p class="sub">
+Representative <strong>pre-annotation</strong> Decompiler output for this
+module's shared <a href="exercises/sample/sample.c">sample program</a>
+(hand-transcribed for this demo, not a live decompile — see the
+<a href="exercises/">exercises</a> to work through the real thing in
+Ghidra). Click any underlined token below to see what it means and which
+guide covers fixing it.
+</p>
+<div class="layout">
+  <div class="panel" id="code-panel">
+    <h2>Decompiler (defaults, before annotation)</h2>
+    <pre id="code"></pre>
+  </div>
+  <div class="panel" id="info-panel">
+    <h2>Explanation</h2>
+    <div id="info-title" class="placeholder">Nothing selected</div>
+    <div id="info-body" class="placeholder">Click a token in the code to see what it means.</div>
+  </div>
+</div>
+
+<script>
+const notes = {
+  fun_init: {
+    title: "FUN_00101189 — default function name",
+    body: "A <code>FUN_</code> prefix means Ghidra reached this address via a call reference but has no symbol for it (00-quickstart/05-xrefs-bookmarks-search.md). This is <code>init_item</code> — rename it with <b>L</b> once you've read what it does (see the <a href='exercises/01-data-types/'>data-types exercise</a>)."
+  },
+  param1_init: {
+    title: "param_1 — auto-named parameter",
+    body: "A placeholder name Ghidra assigns to every parameter until you rename it. Here it's actually a pointer to an <code>Item</code> struct (see <a href='01-data-types-structures.md'>01-data-types-structures.md</a>) — retype it with <b>Ctrl+L</b> in the Decompiler, or edit the full signature via the Function Editor (<b>F</b>, see <a href='02-decompiler-tuning.md'>02-decompiler-tuning.md</a>)."
+  },
+  offset4: {
+    title: "param_1[1] — raw offset before a struct is applied",
+    body: "Indexing a 4-byte-wide array at position 1 lands on byte offset 4. Once you apply the <code>Item</code> struct (id@0, quantity@4, name@8) from the <a href='exercises/01-data-types/'>data-types exercise</a>, this renders as <code>it-&gt;quantity</code> instead."
+  },
+  name_offset: {
+    title: "(char *)(param_1 + 2) — struct field by raw offset",
+    body: "As a 4-byte-int stride, index 2 is byte offset 8 — exactly where <code>Item.name[16]</code> starts. Raw pointer arithmetic like this is the tell that a structure is being written before Ghidra knows the layout."
+  },
+  svar: {
+    title: "sVar1 — Ghidra's variable-naming convention",
+    body: "The prefix encodes Ghidra's guessed type family (<code>s</code> = size/pointer-ish value here), and <code>Var</code>+number marks it as an auto-generated local, distinct from a user-named one."
+  },
+  undefined1: {
+    title: "undefined1 — size known, type unknown",
+    body: "<code>undefinedN</code> means Ghidra knows the value is N bytes wide but has no better type for it yet — a placeholder until you retype it, same idea as <code>undefined4</code> return types elsewhere in this listing."
+  },
+  fun_total: {
+    title: "FUN_00101220 — default function name",
+    body: "This is <code>total_quantity</code> — same <code>FUN_</code> convention as above. Its loop is the centerpiece of the <a href='exercises/01-data-types/'>data-types exercise</a>: the stride below reveals the struct size before you've named anything."
+  },
+  stride: {
+    title: "param_1[local_10 * 6 + 1] — struct stride, before naming",
+    body: "Each loop element is 6 ints wide (24 bytes) — the exact size of the <code>Item</code> struct (4 + 4 + 16). Field index 1 (byte offset 4) is <code>quantity</code>. This kind of stride arithmetic is usually your first clue that an array of structs is being iterated, well before you've defined the struct."
+  },
+  locals: {
+    title: "local_10 / local_c — auto-named locals",
+    body: "Generic local-variable names (loop counter and accumulator here) — rename them once you understand their role, same as any other Decompiler local (00-quickstart/04-basic-annotations.md)."
+  },
+  fun_apply: {
+    title: "FUN_001012a0 — default function name",
+    body: "This is <code>apply_op</code> — see the <a href='exercises/02-decompiler-tuning/'>decompiler-tuning</a> and <a href='exercises/03-control-flow-references/'>control-flow</a> exercises, both built around this one function."
+  },
+  indirect_call: {
+    title: "(**(code **)(&DAT_00104040 + ...))(...) — computed call",
+    body: "An indirect call through a function-pointer array: the actual callee (<code>op_add</code> or <code>op_sub</code>) is a runtime value, not a fixed address, so this is a <code>COMPUTED_CALL</code> (<a href='03-control-flow-reference-analysis.md'>03-control-flow-reference-analysis.md</a>), not a plain call. Fix <em>this call site's</em> prototype with right-click → Override Signature (<a href='02-decompiler-tuning.md'>02-decompiler-tuning.md</a>) — you can't fix 'the' callee since it changes at runtime."
+  },
+  dat: {
+    title: "DAT_00104040 — default data-reference name",
+    body: "Same idea as <code>FUN_</code>/<code>SUB_</code>, but for a data reference instead of a control-flow one — this is Ghidra's default name for the <code>ops</code> function-pointer array before you rename it (00-quickstart/05-xrefs-bookmarks-search.md, 'Default symbol naming from reference type')."
+  },
+  code_type: {
+    title: "code ** — the built-in `code` type",
+    body: "<code>code</code> means 'this is executable code' rather than data; <code>code **</code> reads as 'pointer to an array of function pointers' — exactly what the <code>ops</code> table is."
+  }
+};
+
+function annotate(groupKey, text) {
+  return `<span class="tok" data-group="${groupKey}" onclick="select('${groupKey}')">${text}</span>`;
+}
+
+document.getElementById('code').innerHTML =
+`void ${annotate('fun_init','FUN_00101189')}(int *${annotate('param1_init','param_1')},int param_2,char *param_3,int param_4)
+
+{
+  size_t ${annotate('svar','sVar1')};
+
+  *${annotate('param1_init','param_1')} = param_2;
+  ${annotate('offset4','param_1[1]')} = param_4;
+  ${annotate('svar','sVar1')} = strlen(param_3);
+  if (0xf < ${annotate('svar','sVar1')}) {
+    ${annotate('svar','sVar1')} = 0xf;
+  }
+  strncpy(${annotate('name_offset','(char *)(param_1 + 2)')},param_3,${annotate('svar','sVar1')});
+  *${annotate('undefined1','(undefined1 *)')}((long)param_1 + (${annotate('svar','sVar1')} + 8)) = 0;
+  return;
+}
+
+
+undefined4 ${annotate('fun_total','FUN_00101220')}(int *param_1,int param_2)
+
+{
+  int ${annotate('locals','local_10')};
+  int ${annotate('locals','local_c')};
+
+  ${annotate('locals','local_c')} = 0;
+  for (${annotate('locals','local_10')} = 0; ${annotate('locals','local_10')} < param_2; ${annotate('locals','local_10')} = ${annotate('locals','local_10')} + 1) {
+    ${annotate('locals','local_c')} = ${annotate('locals','local_c')} + ${annotate('stride','param_1[local_10 * 6 + 1]')};
+  }
+  return ${annotate('locals','local_c')};
+}
+
+
+undefined4 ${annotate('fun_apply','FUN_001012a0')}(int param_1,int param_2,int param_3)
+
+{
+  return ${annotate('indirect_call','(**(')}${annotate('code_type','code **')}${annotate('indirect_call',')(&')}${annotate('dat','DAT_00104040')}${annotate('indirect_call',' + (long)param_1 * 8))(param_2,param_3)')};
+}`;
+
+function select(group) {
+  document.querySelectorAll('.tok').forEach(el => {
+    el.classList.toggle('active', el.dataset.group === group);
+  });
+  const note = notes[group];
+  document.getElementById('info-title').innerHTML = note.title;
+  document.getElementById('info-title').classList.remove('placeholder');
+  document.getElementById('info-body').innerHTML = note.body;
+  document.getElementById('info-body').classList.remove('placeholder');
+}
+</script>
+</body>
+</html>

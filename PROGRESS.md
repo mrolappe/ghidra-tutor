@@ -45,6 +45,25 @@ This file only tracks what's done, what's next, and facts later phases need.
   12.1.2 source/docs by a research pass; sourcing kept in
   `01-core-workflows/RESEARCH-NOTES.md`.
 
+- Phase 4 — 01-core-workflows: Exercises + click-to-annotate HTML demo.
+  Added `exercises/<slug>/{problem.md, solution.md}` for all 5 Phase 3
+  topics (`01-data-types`, `02-decompiler-tuning`,
+  `03-control-flow-references`, `04-function-id`, `05-version-tracking` —
+  `06-scripting-outlook` stayed preview-only, no exercise, per the Phase 3
+  note). Exercises 01–03 share one continuous sample program
+  (`exercises/sample/{sample.c, build.sh}`, an `Item` struct + a
+  function-pointer array) so the struct/decompiler-tuning/control-flow
+  exercises chain the way 00-quickstart's did. `04-function-id` and
+  `05-version-tracking` each need their own binary *pairs* (a custom FID
+  database needs a "reference" and "target" binary sharing library code; VT
+  needs two versions of one program), so they get their own `sample/`
+  subfolders instead of reusing the shared one. Added
+  `01-core-workflows/click-to-annotate-demo.html` (self-contained, no
+  dependencies): a hand-transcribed "before annotation" Decompiler view of
+  the shared sample's three functions, with clickable tokens explaining
+  Ghidra's default-naming conventions and cross-linking back to the guides
+  and exercises that fix each one.
+
 ## Carried-forward notes
 
 - Git remote uses **SSH** (`git@github.com:mrolappe/ghidra-tutor.git`). An
@@ -89,23 +108,40 @@ This file only tracks what's done, what's next, and facts later phases need.
   `__fastcall` in the `.cspec` — it's the Microsoft x64 convention, not the
   32-bit fastcall the name suggests. Don't assume convention names carry
   their common meaning across architectures.
+- Phase 4 pattern for exercises needing more than one related binary: don't
+  force everything into the module's one shared `sample/` folder — Function
+  ID needs a *pair* of independently-built binaries sharing library code
+  (`04-function-id/sample/{lib.c, reference.c, target.c, build.sh}` →
+  `reference.bin`/`target.bin`), and Version Tracking needs two *versions*
+  of one program (`05-version-tracking/sample/{v1.c, v2.c, build.sh}`).
+  Give an exercise its own `sample/` subfolder whenever its pedagogical
+  point specifically requires more than one binary; keep using the shared
+  module-level `sample/` for exercises that just need one program with
+  interesting structure.
+- `01-core-workflows/click-to-annotate-demo.html` shows Decompiler output
+  that's **hand-transcribed** (representative of what Ghidra would show,
+  not a captured real decompile) since Ghidra isn't installed/scriptable in
+  this environment — flagged as such in the HTML itself. If a later module's
+  interactive HTML needs real tool output (e.g. actual register values,
+  actual memory maps), reconsider whether hand-transcription is still
+  honest enough or whether it needs an "illustrative only" disclaimer too.
 
 ## Next
 
-- Phase 4 — 01-core-workflows: Exercises + click-to-annotate HTML demo
-  - Content: `exercises/<slug>/{problem.md, solution.md}` for the 6
-    Phase 3 topics (data types & structures, decompiler tuning, control-flow/
-    reference analysis, FID, version tracking, scripting outlook — though the
-    last is a preview, not exercise material, so likely only 5 exercise
-    sets), plus a "click-to-annotate" interactive HTML demo on a sample
-    Decompiler output (click a variable → explanation), per PLAN.md's
-    visual/interactive materials table.
+- Phase 5 — 02-retro-amiga: Guides + diagram
+  - Content: 68000 recap (short refresher, not a full course — user already
+    knows at least one retro CPU per PLAN.md's context), Hunk executable
+    format, exec.library/Kickstart basics, recognizing custom-chip registers
+    (Agnus/Denise/Paula) in disassembly, typical copy-protection patterns.
+    Plus a Mermaid Hunk-/executable-layout diagram, per PLAN.md's
+    visual/interactive materials table (`02-retro-amiga` row).
   - Model: Sonnet 5.
-  - Follow the 00-quickstart Phase 2 convention: prefer one continuous
-    sample program shared across exercises over several throwaway ones,
-    plain host-native C (`cc`/`gcc`/`clang` + `strip`, no cross-assembler —
-    01-core-workflows isn't platform-specific), source-only committed
-    (`sample.c`/`build.sh`, gitignore covers build artifacts).
+  - Legal note applies from here on: no copyrighted ROMs/games. Use
+    self-assembled samples (vasm/vbcc or vasm+vlink for 68000, per PLAN.md's
+    legal note) or public-domain/homebrew/demoscene material or AROS as
+    reference — this is a hard switch from 00-quickstart/01-core-workflows'
+    plain-`cc` sample convention (see the note above on platform-specific
+    toolchains for modules 02–04).
   - Open items carried from Phase 1 and Phase 3 (see notes above): several
     facts are flagged "verify on an installed copy" rather than fully
     source-confirmed — worth a sanity check once Ghidra is actually
