@@ -220,25 +220,87 @@ This file only tracks what's done, what's next, and facts later phases need.
   Unresolved, not blocking but worth a check if a later phase needs more
   LVO constants than just this one example.
 
+- Phase 7 — 03-retro-atari-st: Guides + diagram. Added
+  `03-retro-atari-st/README.md` (module index + Mermaid PRG/TOS header +
+  segment-layout diagram, offsets from the header table) and three guides:
+  68000/TOS differences from Amiga (no fixed SysBase-at-address-4
+  equivalent — GEMDOS hands each process a basepage pointer on the stack
+  instead; full basepage field table; `Mshrink()` stack-shrink convention;
+  `Super()`/user-supervisor mode as a genuine RE signal on this platform,
+  unlike Amiga's ungated custom chips), GEMDOS/BIOS/XBIOS call recognition
+  (TRAP #1/#13/#14, stack-based calling convention, caller cleans the
+  stack, unnamed-opcode problem structurally identical to Amiga's unnamed
+  LVO calls), and PRG/TOS executable format (28-byte header field table,
+  `PRGFLAGS` bits, `ABSFLAG`'s known-incorrect-on-some-TOS-versions trap,
+  fixup-stream encoding, no separate entry-point field — always byte 0 of
+  TEXT). Confirmed **Ghidra 12.1.2 has no native PRG/TOS loader either**
+  (same check method as Phase 5's Hunk-loader check: full `Loader` class
+  listing plus full-tree `atari`/`gemdos`/`prg` search, both negative;
+  `68000.opinion` only pairs 68000 with ELF/PEF/Palm/a.out) — but unlike
+  Amiga's `ghidra-amiga` extension (a full Loader extension needing a
+  Ghidra-point-release match), the Atari-side community option
+  (`czietz/ghidraScripts_for_Atari`) is plain Ghidra scripts with no
+  build/install step, so the guide frames it as a lighter-weight workaround
+  rather than reusing the Amiga extension story unchanged. All facts
+  verified against The Atari Compendium (with its "not for public
+  distribution" draft-copy caveat flagged and FreeMiNT's `tos.hyp`
+  preferred as the citable link) and Ghidra 12.1.2 source directly;
+  sourcing kept in `03-retro-atari-st/RESEARCH-NOTES.md`.
+
 ## Next
 
-- Phase 7 — 03-retro-atari-st: Guides + Diagram
-  - Content per PLAN.md: 68000/TOS differences from Amiga (build on
-    `02-retro-amiga/01-68000-recap.md` rather than repeating the 68000
-    recap — reference it), GEMDOS/BIOS/XBIOS call recognition, the
-    PRG/TOS executable header format. Plus a Mermaid diagram of the
-    PRG/TOS executable layout (module's row in PLAN.md's visual-materials
-    table).
+- Phase 8 — 03-retro-atari-st: Exercises
+  - Content per PLAN.md: `exercises/<slug>/{problem.md, solution.md}` for
+    the three Phase 7 topics (`01-amiga-atari-differences`,
+    `02-gemdos-bios-xbios-calls`, `03-prg-tos-executable-format`). No
+    dedicated interactive HTML for this module per PLAN.md's
+    visual-materials table (02-retro-amiga/03-retro-atari-st share one
+    row — the Custom-Chip-/Register-Explorer already built in Phase 6 for
+    Amiga; Atari doesn't get its own second interactive piece).
   - Model: Sonnet 5.
-  - Same legal constraint as 02-retro-amiga: self-assembled/public-domain
-    material only, no copyrighted TOS ROM/game content — this module's
-    guides can reference documented TOS/GEMDOS behavior without needing
-    ROM contents, same as 02-retro-amiga never needed Kickstart ROM bytes.
-  - Verify whether Ghidra has a native PRG/TOS loader before assuming one
-    is needed (check the same way Phase 5 checked for a Hunk loader —
-    `Loader` classes under `ghidra/app/util/opinion/`, plus an
-    `.opinion` file check for the 68000 language) — don't assume it's
-    missing just because Hunk was.
+  - Sample binaries: a hand-written 68000 GEMDOS program (`.s`, vasm
+    Motorola syntax + vlink `-bataritos` or equivalent target, following
+    Phase 6's `exercises/sample/` pattern) demonstrating basepage access,
+    at least one GEMDOS/BIOS/XBIOS TRAP call, and a real PRG header to
+    inspect by hand — same legal constraint as every retro module
+    (self-assembled only, no copyrighted TOS ROM; EmuTOS is noted in
+    `RESEARCH-NOTES.md` §5 as a legally clean ROM-level substitute if a
+    later phase ever wants boot-ROM material, not needed for this one).
+  - Same environment caveat as Phase 6: no 68000 toolchain
+    (vasm/vlink) is installed in this session's environment — verify the
+    build script's target flags against actual vasm/vlink docs for
+    Atari/GEMDOS output (`-Fbin`/`-bataritos` or whatever the real flag
+    is — don't assume the Amiga `-bamigahunk` naming pattern carries
+    over) and flag as unverified/not-run the same way Phase 6 did.
   - Open items carried from Phase 1 and Phase 3: several quickstart/
     core-workflows facts are still flagged "verify on an installed copy" —
     not blocking, worth a sanity check whenever Ghidra is actually running.
+
+## Carried-forward notes (continued)
+
+- **Atari Compendium distribution caveat** (Phase 7): the primary Atari-
+  world source used for this module's facts (TRAP numbers, PRG header
+  offsets, basepage struct, opcode tables) carries a "not for public
+  distribution" notice on its own title page — a 1992 author draft-review
+  copy, openly mirrored across the Atari community for decades but never
+  formally re-released. Guides cite the *facts* (numbers, offsets, table
+  entries) rather than link to or bundle the PDF itself; prefer linking
+  `freemint.github.io/tos.hyp` (actively maintained, openly hosted,
+  independently cross-checked at least one TRAP number against it) when a
+  single canonical link is needed. Keep this in mind if a later phase
+  wants to cite the Compendium again.
+- **`czietz/ghidraScripts_for_Atari` internals unverified** (Phase 7, same
+  treatment Phase 6 gave `ghidra-amiga`): confirmed to exist and to
+  provide `ImportAtariPRG.py`/`ImportAtariTOSROM.py`/a MiNTLib FID
+  database via its README, but the actual Python source (exact fixup-
+  stream handling, whether TEXT/DATA/BSS become separate memory blocks)
+  wasn't reviewed. Worth a closer look once Phase 8's exercises actually
+  need to recommend/use it.
+- **Open question, not settled by a primary source** (Phase 7): whether
+  classic single-tasking `Pexec()` switches the CPU to user mode before
+  jumping to a freshly loaded program, or leaves it in whatever mode it
+  inherited and relies on the program calling `Super()` itself. Flagged
+  as Unresolved in `03-retro-atari-st/RESEARCH-NOTES.md` rather than
+  asserted either way in the guide text. A future pass could resolve this
+  by reading EmuTOS's (GPL'd, source-available) `Pexec()` implementation
+  directly.
