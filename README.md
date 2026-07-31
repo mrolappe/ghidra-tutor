@@ -32,5 +32,5 @@ self-built with free cross-assemblers/compilers (vasm/vbcc for 68000, cc65 for
 
 ## Progress
 
-See [PROGRESS.md](PROGRESS.md) for what's done and what's next — each work
-session picks up from there.
+See [PLAN.md](PLAN.md) for the full curriculum plan and [PROGRESS.md](PROGRESS.md)
+for what's done and what's next — each work session picks up from there.
