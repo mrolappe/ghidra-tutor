@@ -469,13 +469,25 @@ This file only tracks what's done, what's next, and facts later phases need.
   reverse-engineering-assistant` / `mcp-reva` path — `uv` availability
   wasn't confirmed in this environment).
 
-- Phase 14 — Cross-cutting polish (final phase per PLAN.md's table):
-  `BACKLOG-future-topics.md`, Anki-importable flashcard CSV (shortcuts,
-  register names, format field names), printable one-page cheatsheet per
-  platform, root `README.md` finalized as the course's front door. Consider
-  a lab-notebook-template too (PLAN.md's "additionally suggested" list) if
-  it doesn't blow the phase's scope — it's explicitly optional, unlike the
-  four items above which PLAN.md's phase table names directly.
+- Phase 14 — Cross-cutting polish (final phase per PLAN.md's table). Added
+  root `BACKLOG-future-topics.md` (the 7 out-of-scope topics from PLAN.md's
+  "Vorgeschlagene weitere Themen", written out in English with a sentence of
+  why each is out of scope, not just re-listed); root `flashcards.csv`
+  (Anki-importable, `#separator:Comma`/`#html:false`/3-column
+  Front,Back,Tags metadata header, 127 cards tagged by module/topic —
+  quickstart shortcuts, Amiga 68000/exec.library/chip-registers/Hunk-IDs,
+  Atari TRAP-calls/basepage/PRG-header, C64 6502/bank-switching/full
+  KERNAL-jump-table/VIC-SID/PRG-CRT — all pulled verbatim from already-
+  verified guide tables, no new facts asserted); one printable one-page
+  `cheatsheet-print.md` per retro module (`02-retro-amiga`,
+  `03-retro-atari-st`, `04-retro-c64` — condensed tables only, cross-linked
+  from each module's `README.md`); root `lab-notebook-template.md` (the
+  optional item from PLAN.md's "additionally suggested" list — small enough
+  to include without blowing the phase's scope); and root `README.md`
+  finalized with a "Cross-cutting extras" section replacing the old
+  "lands in a later polish pass" placeholder line. Validated
+  `flashcards.csv` parses as well-formed 3-field CSV (127 data rows, via a
+  quick Python csv-module check) before committing.
 
 ## Carried-forward notes (continued)
 
@@ -637,3 +649,13 @@ This file only tracks what's done, what's next, and facts later phases need.
   worth knowing it's there if a later session goes looking for why an
   unexpected extension folder exists, or wants to rename/rebuild it
   cleanly into a folder actually named `reverse-engineering-assistant`.
+
+## Next
+
+None — Phase 14 was the last phase in PLAN.md's table. The curriculum is
+content-complete: 7 modules, guides + exercises + diagrams throughout, plus
+Phase 14's cross-cutting extras (flashcards, per-platform printable
+cheatsheets, lab-notebook template, backlog). Any further work is either a
+correction/refresh pass (re-verify against a newer Ghidra release, resolve
+one of the "Unresolved" items scattered across the `RESEARCH-NOTES.md`
+files) or a genuinely new topic — see `BACKLOG-future-topics.md`.

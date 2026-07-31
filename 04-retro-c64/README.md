@@ -30,6 +30,8 @@ covers either format.
 4. [PRG & cartridge (CRT) formats](04-prg-cartridge-formats.md)
 5. [VIC-II & SID registers](05-vic-sid-registers.md)
 
+Printable one-page reference: [cheatsheet-print.md](cheatsheet-print.md).
+
 Facts in these guides are checked against Ghidra 12.1.2's own source
 (processor definitions, loader classes), c64-wiki.com's primary reference
 tables, the VICE Emulator Manual's documented file-format chapter, and

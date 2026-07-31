@@ -32,6 +32,8 @@ encoding are in [PRG/TOS executable format](03-prg-tos-executable-format.md).
 2. [GEMDOS/BIOS/XBIOS call recognition](02-gemdos-bios-xbios-calls.md)
 3. [PRG/TOS executable format](03-prg-tos-executable-format.md)
 
+Printable one-page reference: [cheatsheet-print.md](cheatsheet-print.md).
+
 Facts in these guides are checked against The Atari Compendium, FreeMiNT's
 `tos.hyp` documentation, and Ghidra 12.1.2's own source — see
 `RESEARCH-NOTES.md` for full sourcing, the Compendium's distribution

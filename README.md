@@ -20,9 +20,20 @@ Later modules build on earlier ones — work through them roughly in order.
 
 Each module has numbered guides plus `exercises/<slug>/{problem.md, sample/, solution.md}`.
 
-Cross-cutting extras (flashcards, lab-notebook template, printable cheatsheets)
-land in a later polish pass — see `BACKLOG-future-topics.md` for topics beyond
-the current scope.
+## Cross-cutting extras
+
+- [`flashcards.csv`](flashcards.csv) — Anki-importable deck (shortcuts,
+  register names, format field names) for the things you just have to
+  memorize. Import via Anki's File → Import, comma-separated, 3 fields
+  (Front, Back, Tags).
+- Printable one-page cheatsheets per retro platform:
+  [Amiga](02-retro-amiga/cheatsheet-print.md),
+  [Atari ST](03-retro-atari-st/cheatsheet-print.md),
+  [C64](04-retro-c64/cheatsheet-print.md).
+- [`lab-notebook-template.md`](lab-notebook-template.md) — a copy-per-exercise
+  template for structured RE notes.
+- [`BACKLOG-future-topics.md`](BACKLOG-future-topics.md) — topics considered
+  and deliberately left out of this course's scope.
 
 ## Legal note on exercise binaries
 

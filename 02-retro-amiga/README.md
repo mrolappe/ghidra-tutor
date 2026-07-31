@@ -22,6 +22,8 @@ Ghidra needs a third-party extension to load one.
 4. [Custom chip registers (Agnus/Denise/Paula)](04-custom-chip-registers.md)
 5. [Typical copy-protection patterns](05-copy-protection-patterns.md)
 
+Printable one-page reference: [cheatsheet-print.md](cheatsheet-print.md).
+
 Facts in these guides are checked against the Motorola/NXP M68000 Programmer's
 Reference Manual, the Amiga Hardware Reference Manual, the Amiga ROM Kernel
 Reference Manual, the literal AmigaOS NDK `doshunks.h` header, and Ghidra
