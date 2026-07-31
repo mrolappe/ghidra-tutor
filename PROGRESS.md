@@ -29,6 +29,21 @@ This file only tracks what's done, what's next, and facts later phases need.
   annotate → xref the same program), matching the README's pipeline
   diagram. Added root `.gitignore` for build artifacts (`*.bin`, `*.o`) and
   local Ghidra project files (`*.gpr`, `*.rep/`).
+- Phase 3 — 01-core-workflows: Guides + diagram. Added
+  `01-core-workflows/README.md` (module index + Mermaid Raw bytes → Disassembly
+  (SLEIGH) → P-Code → Decompiler-output diagram) and six guides: data types &
+  structures (Data Type Manager, Structure/Enum editors, typedefs/pointers,
+  File vs Project archives, C-Parser), decompiler tuning (calling
+  conventions, Function Editor dialog, Signature Source priority incl. the
+  new `AI` source type, call-site signature overrides, Commit Params/Return),
+  control-flow/reference analysis (RefType/FlowType enumeration, default
+  symbol-name prefixes, Flow/Fallthrough Override, P-Code CFG/DFG graphing),
+  Function ID (FID hashing model, Single/Multiple Match rules, FID database
+  creation), Version Tracking basics (session wizard, correlators,
+  Automatic Version Tracking), and a short scripting outlook pointing to the
+  future 05-automation-scripting module. All facts verified against Ghidra
+  12.1.2 source/docs by a research pass; sourcing kept in
+  `01-core-workflows/RESEARCH-NOTES.md`.
 
 ## Carried-forward notes
 
@@ -61,17 +76,37 @@ This file only tracks what's done, what's next, and facts later phases need.
   `*.rep/`) are gitignored (root `.gitignore`, added Phase 2) — only source
   (`sample.c`, `build.sh`) is committed; later modules' sample/ folders
   should follow the same source-only convention.
+- A few Phase 3 facts couldn't be fully confirmed and are flagged in
+  `01-core-workflows/RESEARCH-NOTES.md` under "Unresolved": the
+  `Ctrl+Shift+D` "Edit Data Type" and `Alt+R` "Create Default Reference"
+  shortcuts (taken from help-doc prose, not a `KeyBindingData` call in
+  source), the Script Manager's open-shortcut and "Rerun Script"
+  (Ctrl+Shift+R, Cheat-Sheet-sourced only), and `FunctionIDDebug.html`
+  (fetched but not reviewed — low-level FID troubleshooting, judged
+  out of scope). Sanity-check against an installed copy when convenient.
+- `02-decompiler-tuning.md` notes a naming surprise worth remembering: on
+  x86-64-win, Ghidra's *default* calling convention is internally named
+  `__fastcall` in the `.cspec` — it's the Microsoft x64 convention, not the
+  32-bit fastcall the name suggests. Don't assume convention names carry
+  their common meaning across architectures.
 
 ## Next
 
-- Phase 3 — 01-core-workflows: Guides + diagram
-  - Content: Data Types & Structures, Decompiler-Tuning (Calling
-    Conventions, Function Signatures), Control-Flow/Reference-Analyse,
-    Function ID (FID) databases/signatures, Version Tracking basics, short
-    outlook to scripting (deferred to 05). Plus the
-    Bytes→P-Code→Decompiler-Output Mermaid diagram.
+- Phase 4 — 01-core-workflows: Exercises + click-to-annotate HTML demo
+  - Content: `exercises/<slug>/{problem.md, solution.md}` for the 6
+    Phase 3 topics (data types & structures, decompiler tuning, control-flow/
+    reference analysis, FID, version tracking, scripting outlook — though the
+    last is a preview, not exercise material, so likely only 5 exercise
+    sets), plus a "click-to-annotate" interactive HTML demo on a sample
+    Decompiler output (click a variable → explanation), per PLAN.md's
+    visual/interactive materials table.
   - Model: Sonnet 5.
-  - Open items carried from Phase 1 (see notes below): a few facts are
-    still flagged "verify on an installed copy" rather than fully
-    source-confirmed — worth a quick sanity check once Ghidra is actually
+  - Follow the 00-quickstart Phase 2 convention: prefer one continuous
+    sample program shared across exercises over several throwaway ones,
+    plain host-native C (`cc`/`gcc`/`clang` + `strip`, no cross-assembler —
+    01-core-workflows isn't platform-specific), source-only committed
+    (`sample.c`/`build.sh`, gitignore covers build artifacts).
+  - Open items carried from Phase 1 and Phase 3 (see notes above): several
+    facts are flagged "verify on an installed copy" rather than fully
+    source-confirmed — worth a sanity check once Ghidra is actually
     installed and running, whenever convenient (not blocking).
