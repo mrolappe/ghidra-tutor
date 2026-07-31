@@ -303,33 +303,76 @@ This file only tracks what's done, what's next, and facts later phases need.
   function reference, and the VICE Emulator Manual; sourcing kept in
   `04-retro-c64/RESEARCH-NOTES.md`.
 
+- Phase 10 — 04-retro-c64: Exercises + Memory-Map-Explorer HTML. Added
+  `exercises/<slug>/{problem.md, solution.md}` for all 5 Phase 9 topics
+  (`01-6502-6510-recap`, `02-memory-map-bank-switching`,
+  `03-kernal-basic-rom-references`, `04-prg-cartridge-formats`,
+  `05-vic-sid-registers`). Exercises 01/02/03/05 share one hand-written
+  6502 program (`exercises/sample/sample.s`, ca65 syntax) built by
+  `exercises/sample/build.sh` into a real PRG (`sample.prg`) — covering an
+  addressing-mode tour, a bank-switch `$01` write (chosen as `$36` so
+  `HIRAM` stays set and the following `JSR $FFD2` remains valid — a
+  deliberately internally-consistent example, unlike the illustrative-only
+  Amiga/Atari samples), a `CHROUT` KERNAL call, and VIC-II border-color +
+  SID voice-1-note pokes, so one shared disassembly carries four of the
+  five topics (mirroring Phase 6's maximal-sharing approach, and unlike
+  Amiga's copy-protection exercise, VIC-II/SID needed no invented
+  pseudo-disassembly since real register pokes involve no copyrighted
+  material). Exercise 04 (PRG/cartridge) hand-walks the same built PRG's
+  2-byte load-address + tokenized-BASIC-`SYS`-stub header empirically
+  (deriving the SYS target from the student's own hex dump rather than
+  asserting cc65's exact `__EXEHDR__` output, which wasn't run/verified —
+  see Carried-forward notes), plus a Part B hand-walking the CRT format
+  using the guide's own already-cited VICE-manual example dump (no build
+  needed for that half). Resolved the open toolchain-shape question from
+  Phase 9's Next-notes: confirmed via cc65's own docs (`cl65.html`,
+  `c64.html` §4.2) that `cl65 -t c64 -C c64-asm.cfg -u __EXEHDR__` is a
+  **single-step** build for an assembly-only `.s` file (no separate
+  ca65+ld65 pass needed), the same single-step shape Phase 8 found for
+  `vasmm68k_mot -Ftos`. Added
+  `04-retro-c64/memory-map-explorer.html` (self-contained, no
+  dependencies): the full `$0000`-`$FFFF` map as a labeled block list plus
+  a mode selector reproducing the guide's condensed 7-row, no-cartridge
+  (`GAME=EXROM=1`) bank-switching table — selecting a mode recolors
+  `$A000`-`$BFFF`/`$D000`-`$DFFF`/`$E000`-`$FFFF` live; `$8000`-`$9FFF`
+  stays RAM throughout (cartridge-only override, out of this selector's
+  documented scope) — plus a filterable/sortable table of the guide's
+  three static reference tables (RAM/ROM/I-O views). Used a 5-slot
+  categorical palette (RAM/BASIC ROM/KERNAL ROM/Char ROM/I-O) from the
+  dataviz skill's validated 8-hue set, checked with
+  `scripts/validate_palette.js` in both light and dark mode (all hard
+  gates pass; the expected light-mode contrast WARN on 3 slots is
+  mitigated since every block already carries a direct text label plus
+  the table view). Verified with a headless Playwright render (9 map
+  rows, 20 table rows, 7 mode options, mode-change confirmed to actually
+  recolor the dynamic rows, filter functional, zero console/page errors,
+  light+dark screenshots checked) — same verification method Phase 6
+  used, run from a sibling project (`~/studio/playwright-lernen`) since
+  this project itself has no `node_modules`.
+
 ## Next
 
-- Phase 10 — 04-retro-c64: Exercises + Memory-Map-Explorer HTML
-  - Content per PLAN.md: `exercises/<slug>/{problem.md, solution.md}` for
-    all 5 Phase 9 topics, plus an interactive Memory-Map-Explorer HTML
-    covering `$0000`-`$FFFF` including bank-switching states (same
-    pattern as Phase 6's Custom-Chip-Register-Explorer, but with a mode
-    selector for the bank-switching table from
-    `04-retro-c64/02-memory-map-bank-switching.md` instead of a static
-    map).
+- Phase 11 — 05-automation-scripting: Guides + Diagram + Exercises
+  - Content per PLAN.md: Script Manager + Java-API basics, Jython
+    scripting, Ghidrathon (Python 3) as the modern path, Headless Analyzer
+    for batch processing — plus a Mermaid sequence diagram of the Headless
+    Analyzer flow, and exercises/solutions. PLAN.md's phase table bundles
+    guides+diagram+exercises into one phase here (unlike the two-phase
+    guides/exercises split used for every module so far) — re-split at
+    the start of the session if it turns out too large for one sitting,
+    per PLAN.md's own note that the table is a starting split, not a
+    rigid requirement.
   - Model: Sonnet 5.
-  - Sample program(s): use cc65 (per PLAN.md's legal note — public-domain/
-    homebrew toolchain, no copyrighted ROM needed), unlike 02/03's
-    vasm/vlink 68000 toolchain. No cc65 toolchain is installed in this
-    session's environment either (same situation Phase 6/8 flagged for
-    vasm/vlink) — write `build.sh` to documented cc65 CLI syntax but flag
-    it as unverified/not-run, consistent with those phases' handling.
-    Check whether cc65 has a single-step `.s`-to-`.prg` path or needs a
-    separate linker pass (ca65+ld65) before assuming either shape — the
-    Atari module's Phase 8 note flagged this as worth checking per-
-    toolchain rather than assuming.
-  - Exercise for KERNAL calls should reuse the `$FFD2`/`CHROUT`-style
-    recognition pattern directly from `03-kernal-basic-rom-references.md`
-    rather than researching new KERNAL addresses.
-  - Exercise for PRG format can hand-walk a 2-byte header the same way
-    Phase 6 hand-walked Hunk blocks and Phase 8 hand-walked the PRG/TOS
-    header — no Ghidra loader needed for that one either.
+  - This module is platform-agnostic (not tied to Amiga/Atari/C64) — it
+    can reuse any already-built sample binary from earlier modules for its
+    scripting-exercise targets rather than building a new one; check
+    00-quickstart's or 01-core-workflows's plain-`cc`-built samples first
+    since those were actually compiled/verified in this environment,
+    unlike the retro modules' unverified vasm/cc65 builds.
+  - `01-core-workflows/06-scripting-outlook.md` already exists as a short
+    preview pointing forward to this module — read it first so 05's
+    guides pick up from where it left off rather than re-covering the
+    same ground.
 
 ## Carried-forward notes (continued)
 
@@ -408,3 +451,57 @@ This file only tracks what's done, what's next, and facts later phases need.
   selected) is sourced. Flagged Unresolved in
   `04-retro-c64/RESEARCH-NOTES.md`; worth confirming before stating the
   literal byte values in a later phase's exercise solution.
+
+- **`cl65 -t c64 -C c64-asm.cfg -u __EXEHDR__` is a single-step, no-C-
+  runtime PRG build** (Phase 10, confirmed via cc65's own `cl65.html` and
+  `c64.html` §4.2, not guessed): `c64-asm.cfg` is cc65's linker config
+  specifically for assembler-only programs (skips the C runtime/`crt0`),
+  and `-u __EXEHDR__` forces linking just the small BASIC-`SYS`-stub
+  module on top, still in one `cl65` call — no separate `ca65`+`ld65`
+  pass needed for a single source file, matching the shape Phase 8 found
+  for `vasmm68k_mot -Ftos`. `exercises/sample/build.sh` uses this, but —
+  like every retro-module toolchain script so far — is **unverified/not
+  run**, since no cc65 install exists in this session's environment.
+- **The exact bytes `__EXEHDR__` emits (the tokenized BASIC line's link-
+  address, line number, and specifically *which* decimal SYS-target
+  address it embeds) are determined by the linker at build time and
+  weren't asserted as fixed values** (Phase 10) — cc65's docs describe the
+  mechanism (a small BASIC stub using `SYS`) but not its literal byte
+  output, and no cc65 install was available to inspect it directly.
+  `exercises/04-prg-cartridge-formats`'s Part A is written to have the
+  student derive these values empirically from their own build's hex
+  dump instead of checking them against an assumed literal sequence —
+  worth keeping this "derive from your own build, don't assert cc65
+  internals" framing if a later phase adds more cc65-based exercises.
+- **BASIC tokenization mechanics used for that exercise are independently
+  sourced** (Phase 10, c64-wiki.com's "BASIC token" page and
+  codebase64.net's SYS-stub walkthrough, cross-checked against each
+  other): `$9E` = the `SYS` token; a stored BASIC line is
+  link-pointer(2, LE) + line-number(2, LE) + tokens/text + `$00`
+  end-of-line, with the *next* line's link-pointer value pointing at
+  that line's own start — a program's last line signals "end" via a
+  `$0000` link pointer in that same slot. These facts are platform-
+  general (any C64 BASIC program), not cc65-specific, so they're safe to
+  reuse without the "unverified toolchain" caveat above.
+- **Amiga's/Atari's "each guide topic gets its own sample-sharing
+  strategy" pattern extended cleanly to a 4th platform**: C64's shared
+  `exercises/sample/sample.s` covers 4 of 5 topics (recap, bank-switching,
+  KERNAL, VIC-II/SID) in one small program, since none of those needed
+  copyrighted material — only the PRG/cartridge-format topic needed
+  something built (the same program, for its header) plus a from-the-guide
+  worked example (CRT, no build). No topic in this module needed Amiga's
+  "invented pseudo-disassembly" treatment (that was specific to
+  copy-protection, which has no real ethical/legal C64 equivalent in this
+  module's topic list).
+- **dataviz-skill palette validation + headless-Playwright rendering are
+  both repeatable checks worth reusing as-is** for any later interactive
+  HTML: `node scripts/validate_palette.js "<hex,...>" --mode
+  light|dark --surface <hex>` (run from the dataviz skill's own directory)
+  for color-accessibility gates, and a short Playwright script (chromium,
+  `colorScheme: 'light'|'dark'`, check `pageerror`/console `error` events,
+  exercise any interactive controls, screenshot both themes) for
+  behavioral/rendering verification. This project itself has no
+  `node_modules`; Phase 10 ran the Playwright check from a sibling project
+  (`~/studio/playwright-lernen`) that already has the package installed —
+  worth checking for a similar sibling install (or a global one) before
+  assuming Playwright needs a fresh `npm install` in a later phase.

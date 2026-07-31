@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C64 Memory Map & Bank-Switching Explorer</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface: #fcfcfb; --text: #0b0b0b; --text-2: #52514e;
+    --muted: #898781; --grid: #e1e0d9; --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --ram: #2a78d6; --basic: #eb6834; --kernal: #1baf7a; --char: #eda100; --io: #e87ba4;
+    --row-hover: #f2f1ec; --input-bg: #fff; --accent: #2a78d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --text: #ffffff; --text-2: #c3c2b7;
+      --muted: #898781; --grid: #2c2c2a; --baseline: #383835;
+      --border: rgba(255,255,255,0.10);
+      --ram: #3987e5; --basic: #d95926; --kernal: #199e70; --char: #c98500; --io: #d55181;
+      --row-hover: #26261f; --input-bg: #242422;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --text: #ffffff; --text-2: #c3c2b7;
+    --muted: #898781; --grid: #2c2c2a; --baseline: #383835;
+    --border: rgba(255,255,255,0.10);
+    --ram: #3987e5; --basic: #d95926; --kernal: #199e70; --char: #c98500; --io: #d55181;
+    --row-hover: #26261f; --input-bg: #242422;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 1.5rem; background: var(--page); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  h1 { font-size: 1.3rem; margin: 0 0 .25rem; }
+  p.sub { color: var(--text-2); margin: 0 0 1rem; font-size: .9rem; max-width: 70ch; }
+  .layout { display: grid; grid-template-columns: minmax(300px, 460px) 1fr; gap: 1.5rem; align-items: start; }
+  @media (max-width: 820px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1rem;
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: .9rem; margin-bottom: .8rem; font-size: .82rem; color: var(--text-2); }
+  .legend .swatch { display: inline-block; width: .8rem; height: .8rem; border-radius: 3px; margin-right: .35rem; vertical-align: -1px; }
+  .sw-ram { background: var(--ram); } .sw-basic { background: var(--basic); }
+  .sw-kernal { background: var(--kernal); } .sw-char { background: var(--char); } .sw-io { background: var(--io); }
+
+  label.mode-label { display: block; font-size: .82rem; color: var(--text-2); margin-bottom: .3rem; }
+  select#mode {
+    width: 100%; padding: .5rem .6rem; font-size: .9rem; margin-bottom: 1rem;
+    border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text);
+  }
+  .bits { font-size: .8rem; color: var(--muted); margin: -.6rem 0 1rem; font-family: ui-monospace, monospace; }
+
+  .map { display: flex; flex-direction: column; gap: 3px; }
+  .row {
+    display: grid; grid-template-columns: 5.5rem 1fr; gap: .6rem; align-items: center;
+    padding: .35rem .5rem; border-radius: 6px; background: var(--cell-empty, transparent);
+    border: 1px solid var(--grid); font-size: .8rem;
+  }
+  .row .addr { font-family: ui-monospace, monospace; color: var(--text-2); white-space: nowrap; }
+  .row .content { display: flex; align-items: center; gap: .5rem; }
+  .row .tag { display: inline-block; padding: .15rem .55rem; border-radius: 999px; font-size: .72rem; font-weight: 600; color: #fff; white-space: nowrap; }
+  .row .label { color: var(--text); }
+  .row.dynamic { cursor: default; }
+  .tag.ram { background: var(--ram); } .tag.basic { background: var(--basic); }
+  .tag.kernal { background: var(--kernal); } .tag.char { background: var(--char); } .tag.io { background: var(--io); }
+  .note { font-size: .78rem; color: var(--muted); margin-top: .8rem; }
+
+  input#filter {
+    width: 100%; padding: .5rem .7rem; font-size: .95rem;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--input-bg); color: var(--text); margin-bottom: .75rem;
+  }
+  .count { color: var(--muted); font-size: .82rem; margin-bottom: .6rem; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; padding: .4rem .5rem; border-bottom: 1px solid var(--grid); font-size: .82rem; }
+  th { position: sticky; top: 0; background: var(--surface); cursor: pointer; user-select: none; white-space: nowrap; }
+  th:hover { color: var(--accent); }
+  tr.hidden { display: none; }
+  code.off { font-family: ui-monospace, monospace; }
+  .grid-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<h1>C64 Memory Map & Bank-Switching Explorer — 04-retro-c64</h1>
+<p class="sub">The 6510's full <code>$0000</code>–<code>$FFFF</code> view, left, plus a mode
+selector that recolors the three bank-switched ranges (<code>$A000</code>–<code>$BFFF</code>,
+<code>$D000</code>–<code>$DFFF</code>, <code>$E000</code>–<code>$FFFF</code>) exactly as
+<a href="02-memory-map-bank-switching.md">02-memory-map-bank-switching.md</a>'s condensed,
+no-cartridge (<code>GAME</code>=<code>EXROM</code>=1) mode table documents. <code>$8000</code>–
+<code>$9FFF</code> stays RAM in every row of that table — a cartridge (not modeled by this
+selector) is the only thing that can put ROM there. Right: the same guide's three static
+reference tables (RAM view / ROM view / I-O view), filterable/sortable.</p>
+
+<div class="layout">
+  <div class="panel">
+    <div class="legend">
+      <span><span class="swatch sw-ram"></span>RAM</span>
+      <span><span class="swatch sw-basic"></span>BASIC ROM</span>
+      <span><span class="swatch sw-kernal"></span>KERNAL ROM</span>
+      <span><span class="swatch sw-char"></span>Char ROM</span>
+      <span><span class="swatch sw-io"></span>I/O</span>
+    </div>
+
+    <label class="mode-label" for="mode">Bank-switch mode (LORAM/HIRAM/CHAREN, no cartridge):</label>
+    <select id="mode"></select>
+    <div class="bits" id="bits"></div>
+
+    <div class="map" id="map"></div>
+    <p class="note">Source for both the map and the mode table: c64-wiki.com, "Memory Map" and
+    "Bank Switching" ("Optimised Mode Table" / "Mode Table Notes" — mode 31, all-high, is the
+    power-up default). See <a href="01-6502-6510-recap.md">01-6502-6510-recap.md</a> for why
+    Ghidra's plain 6502 processor spec can't see any of this switching happen.</p>
+  </div>
+
+  <div class="panel">
+    <input id="filter" type="text" placeholder="Filter (e.g. &quot;kernal&quot;, &quot;sid&quot;, &quot;$d0&quot;, &quot;screen&quot;)…" autofocus>
+    <div class="count" id="count"></div>
+    <div class="grid-wrap">
+      <table id="tbl">
+        <thead>
+          <tr><th data-col="0">View</th><th data-col="1">Address</th><th data-col="2">Contents</th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- static reference tables (RAM view / ROM view / I-O view), from the guide ---
+const refData = [
+  ['RAM', '$0000–$00FF', 'Zero page'],
+  ['RAM', '$0100–$01FF', 'Stack'],
+  ['RAM', '$0200–$03FF', 'OS/BASIC pointers and buffers'],
+  ['RAM', '$0400–$07FF', 'Screen memory (default)'],
+  ['RAM', '$0800–$9FFF', 'Free BASIC program storage'],
+  ['RAM', '$A000–$BFFF', 'Free ML storage when switched out from BASIC ROM'],
+  ['RAM', '$C000–$CFFF', 'Free ML storage (never has a ROM overlay)'],
+  ['RAM', '$D000–$DFFF', 'Free ML storage when switched out from Character ROM/I-O'],
+  ['RAM', '$E000–$FFFF', 'Free ML storage when switched out from KERNAL ROM'],
+  ['ROM', '$8000–$9FFF', 'Cartridge ROM (low)'],
+  ['ROM', '$A000–$BFFF', 'BASIC interpreter ROM, or cartridge ROM (high)'],
+  ['ROM', '$D000–$DFFF', 'Character generator ROM'],
+  ['ROM', '$E000–$FFFF', 'KERNAL ROM, or cartridge ROM (high)'],
+  ['I/O', '$D000–$D3FF', 'VIC-II registers'],
+  ['I/O', '$D400–$D7FF', 'SID registers'],
+  ['I/O', '$D800–$DBFF', 'Color RAM'],
+  ['I/O', '$DC00–$DCFF', 'CIA 1'],
+  ['I/O', '$DD00–$DDFF', 'CIA 2'],
+  ['I/O', '$DE00–$DEFF', 'I/O 1 (cartridge expansion)'],
+  ['I/O', '$DF00–$DFFF', 'I/O 2 (cartridge expansion)'],
+];
+
+// --- bank-switch mode table (no cartridge, GAME=EXROM=1), from the guide ---
+// each row: loram, hiram, charen, a000-bfff, d000-dfff, e000-ffff, note
+const modes = [
+  {l:1,h:1,c:1, a:'basic', d:'io',   e:'kernal', note:'default at power-up (mode 31)'},
+  {l:0,h:1,c:1, a:'ram',   d:'io',   e:'kernal', note:''},
+  {l:1,h:0,c:1, a:'ram',   d:'io',   e:'ram',    note:''},
+  {l:0,h:0,c:0, a:'ram',   d:'ram',  e:'ram',    note:'CHAREN irrelevant when LORAM=HIRAM=0'},
+  {l:1,h:1,c:0, a:'basic', d:'char', e:'kernal', note:''},
+  {l:0,h:1,c:0, a:'ram',   d:'char', e:'kernal', note:''},
+  {l:1,h:0,c:0, a:'ram',   d:'char', e:'ram',    note:''},
+];
+
+const tagInfo = {
+  ram:    {cls:'ram',    label:'RAM'},
+  basic:  {cls:'basic',  label:'BASIC ROM'},
+  kernal: {cls:'kernal', label:'KERNAL ROM'},
+  char:   {cls:'char',   label:'Char ROM'},
+  io:     {cls:'io',     label:'I/O'},
+};
+
+function tagHtml(key) {
+  const t = tagInfo[key];
+  return `<span class="tag ${t.cls}">${t.label}</span>`;
+}
+
+// --- mode selector ---
+const modeSel = document.getElementById('mode');
+modes.forEach((m, i) => {
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = `LORAM=${m.l} HIRAM=${m.h} CHAREN=${m.c}` + (m.note ? ` — ${m.note}` : '');
+  modeSel.appendChild(opt);
+});
+
+// --- static (never bank-switched) blocks, in address order, with a gap left for each dynamic block ---
+const staticBlocks = [
+  ['$0000–$00FF', 'Zero page', 'ram'],
+  ['$0100–$01FF', 'Stack', 'ram'],
+  ['$0200–$03FF', 'OS/BASIC pointers and buffers', 'ram'],
+  ['$0400–$07FF', 'Screen memory (default)', 'ram'],
+  ['$0800–$9FFF', 'Free BASIC program storage', 'ram'],
+  ['DYNAMIC_A', '', ''],
+  ['$C000–$CFFF', 'Free ML storage (never overlaid)', 'ram'],
+  ['DYNAMIC_D', '', ''],
+  ['DYNAMIC_E', '', ''],
+];
+
+function renderMap() {
+  const m = modes[+modeSel.value];
+  document.getElementById('bits').textContent =
+    `$01 relevant bits — LORAM(bit0)=${m.l} HIRAM(bit1)=${m.h} CHAREN(bit2)=${m.c}`;
+
+  const dynLabel = {
+    a: {ram: 'Free ML storage (BASIC ROM switched out)', basic: 'BASIC interpreter ROM'},
+    d: {ram: 'Free ML storage (Char ROM/I-O switched out)', char: 'Character generator ROM', io: 'VIC-II / SID / Color RAM / CIA 1 / CIA 2 / I-O 1 / I-O 2'},
+    e: {ram: 'Free ML storage (KERNAL ROM switched out)', kernal: 'KERNAL ROM'},
+  };
+
+  const mapEl = document.getElementById('map');
+  mapEl.innerHTML = staticBlocks.map(([addr, label, key]) => {
+    let a = addr, l = label, k = key;
+    if (addr === 'DYNAMIC_A') { a = '$A000–$BFFF'; k = m.a; l = dynLabel.a[m.a]; }
+    if (addr === 'DYNAMIC_D') { a = '$D000–$DFFF'; k = m.d; l = dynLabel.d[m.d]; }
+    if (addr === 'DYNAMIC_E') { a = '$E000–$FFFF'; k = m.e; l = dynLabel.e[m.e]; }
+    return `<div class="row ${addr.startsWith('DYNAMIC') ? 'dynamic' : ''}">` +
+      `<span class="addr">${a}</span>` +
+      `<span class="content">${tagHtml(k)}<span class="label">${l}</span></span>` +
+      `</div>`;
+  }).join('');
+}
+modeSel.addEventListener('change', renderMap);
+renderMap();
+
+// --- filterable/sortable reference table ---
+const tbody = document.getElementById('rows');
+const filterInput = document.getElementById('filter');
+const countEl = document.getElementById('count');
+
+function renderTable() {
+  tbody.innerHTML = refData.map(([view, addr, desc]) =>
+    `<tr><td>${view}</td><td><code class="off">${addr}</code></td><td>${desc}</td></tr>`
+  ).join('');
+}
+renderTable();
+
+function applyFilter() {
+  const q = filterInput.value.trim().toLowerCase();
+  let shown = 0;
+  for (const tr of tbody.rows) {
+    const match = q === '' || tr.textContent.toLowerCase().includes(q);
+    tr.classList.toggle('hidden', !match);
+    if (match) shown++;
+  }
+  countEl.textContent = `${shown} / ${refData.length} rows`;
+}
+filterInput.addEventListener('input', applyFilter);
+applyFilter();
+
+let sortState = { col: -1, asc: true };
+document.querySelectorAll('th').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = +th.dataset.col;
+    sortState.asc = sortState.col === col ? !sortState.asc : true;
+    sortState.col = col;
+    refData.sort((a, b) => {
+      const av = String(a[col]), bv = String(b[col]);
+      const cmp = av.localeCompare(bv, undefined, { numeric: true });
+      return sortState.asc ? cmp : -cmp;
+    });
+    renderTable();
+    applyFilter();
+  });
+});
+</script>
+</body>
+</html>
