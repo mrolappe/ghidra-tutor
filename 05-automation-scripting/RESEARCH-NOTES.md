@@ -219,8 +219,15 @@ has moved past both halves of that description:
 This machine's Ghidra user settings directory
 (`~/Library/ghidra/ghidra_12.1.2_PUBLIC/Extensions/`) already has a
 `GhidraMCP` extension installed (`extension.properties`: version `12.1.2`,
-i.e. already pinned to this exact Ghidra release, author "Ben Ethington" —
-the LaurieWired GhidraMCP project). Not used or evaluated in this phase
+i.e. already pinned to this exact Ghidra release, author "Ben Ethington").
+**Correction (made in Phase 12):** this is not the LaurieWired/GhidraMCP
+project as originally guessed here — Phase 12 downloaded and diffed the
+actual release artifact and identified it as
+[bethington/ghidra-mcp](https://github.com/bethington/ghidra-mcp) v6.0.0
+(Java package `com.xebyte`; bethington's README describes it as originally
+derived from LaurieWired/GhidraMCP but substantially rewritten since, and
+GitHub reports it as a detached re-upload, not a tracked fork). Not used or
+evaluated in this phase
 (out of scope — 05-automation-scripting is plain scripting, not MCP), but
 Phase 12's MCP research/recommendation step should know a real,
 version-matched install already exists locally and could be used for

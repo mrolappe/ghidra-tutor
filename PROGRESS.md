@@ -396,32 +396,63 @@ This file only tracks what's done, what's next, and facts later phases need.
   the wrong file. Exercise 03 has students reproduce this on purpose, not
   just read about it.
 
+- Phase 12 — 06-ai-assisted-ghidra: MCP research + recommendation +
+  architecture diagram. Added `06-ai-assisted-ghidra/README.md` (module
+  index + Mermaid architecture diagram: Ghidra JVM ↔ embedded MCP server ↔
+  AI client, with the four trust boundaries — binary→DB, DB→tool-result→
+  LLM, LLM→tool-call→write/exec, and network reachability — marked and
+  explained) and `01-mcp-server-recommendation.md` (the reader-facing
+  guide: why star count is a misleading signal, the three architecture
+  patterns in the field, the field-wide prompt-injection gap, and the
+  recommendation itself). Research ran via a background Opus agent (the
+  plan's model recommendation for this specific evaluation step),
+  enumerating **15 distinct Ghidra MCP projects** via GitHub search/API
+  and reading 5 at source level. Recommendation: **ReVa**
+  (`cyberkaida/reverse-engineering-assistant`) — the only candidate whose
+  security model is enforced in code rather than delegated to operator
+  env-vars (hard refusal to bind publicly without an API key), the only
+  one with a per-Ghidra-version release/test matrix and Sigstore-signed
+  release artifacts, and its single-process native-MCP architecture
+  (official Java MCP SDK embedded in the Ghidra JVM) is the one judged
+  honest to teach vs. the two-process/non-MCP-inner-hop pattern used by
+  the runner-up. Full sourcing (GitHub API metadata with timestamps,
+  file-and-line citations into each project's own source, downloaded/diffed
+  release artifacts) kept in `06-ai-assisted-ghidra/RESEARCH-NOTES.md`,
+  including an explicit "Unresolved" section — most importantly that no
+  server was actually started/connected to in this session (no display
+  available), so Phase 13 must verify the ReVa install path hands-on.
+  **Correction to a Phase 11 carried-forward note**: the `GhidraMCP`
+  extension already installed on this machine is *not*
+  LaurieWired/GhidraMCP as Phase 11 guessed — downloading and diffing the
+  actual release artifact identified it as **bethington/ghidra-mcp**
+  v6.0.0 (a substantially-rewritten descendant, not a tracked fork).
+  Corrected in both `05-automation-scripting/RESEARCH-NOTES.md` and here.
+
 ## Next
 
-- Phase 12 — 06-ai-assisted-ghidra: MCP research + recommendation +
-  architecture diagram.
-  - Content per PLAN.md: research and recommend a concrete Ghidra MCP
-    server (weighing maintenance status, security/trust boundaries — an
-    LLM gets tool access to an RE tool — and future-proofing), plus a
-    Mermaid architecture diagram (Ghidra ↔ MCP server ↔ AI client ↔ user,
-    including trust boundaries).
-  - **Model recommendation from PLAN.md: Opus**, for this one evaluation
-    step specifically (optional, not a hard requirement — Sonnet 5 is
-    fine if Opus isn't available/wanted).
-  - **Head start, found during Phase 11, not yet evaluated**: this
-    session's machine already has a `GhidraMCP` extension installed
-    (`~/Library/ghidra/ghidra_12.1.2_PUBLIC/Extensions/GhidraMCP/
-    extension.properties`: version `12.1.2` — already pinned to this
-    course's exact Ghidra release; author "Ben Ethington", i.e. the
-    LaurieWired GhidraMCP project). Phase 12 should do its own from-
-    scratch competitive research rather than assume this is *the*
-    recommendation (that's still an open question — other MCP servers
-    exist and need weighing), but it means firsthand hands-on evaluation
-    is possible here, not just changelog/README research the way Phase 11
-    had to lean on for PyGhidra.
-  - Phase 13 (setup/workflows/exercises for whichever server gets
-    recommended) depends on this phase's pick — don't start it in the
-    same session per the standard one-phase-per-session rule.
+- Phase 13 — 06-ai-assisted-ghidra: Setup, workflows, verification
+  pitfalls + exercises, for **ReVa** (Phase 12's pick).
+  - Content per PLAN.md: setup guide, sensible AI-assisted RE workflows,
+    limits/verification-duty when taking AI suggestions ("never accept
+    Ghidra output from AI unreviewed").
+  - **Must verify hands-on before writing the setup guide as fact**
+    (flagged Unresolved by Phase 12's research): building ReVa from source
+    against `~/ghidra_12.1.2_PUBLIC` should produce a matching
+    `version=12.1.2` and install without Ghidra's "Extension Version
+    Mismatch" dialog (the prebuilt release zip declares `version=12.1` and
+    does trigger that dialog) — actually run the Gradle build in this
+    environment and confirm, rather than asserting the mechanical
+    inference as fact.
+  - Exercises should include: disabling ReVa's `SCRIPTING` tool group
+    before pointing the agent at an untrusted binary (the concrete
+    mitigation for the prompt-injection gap Phase 12 documented as
+    unaddressed by every evaluated server), and a review-before-accepting
+    exercise (agent proposes a rename/retype, student verifies it against
+    the actual decompiled code before committing it) — matches PLAN.md's
+    "Verifikationspflicht" framing for this module directly.
+  - No dedicated diagram/interactive HTML planned for Phase 13 per
+    PLAN.md's visual-materials table (06's only diagram is Phase 12's
+    architecture diagram, already done).
 
 ## Carried-forward notes (continued)
 
